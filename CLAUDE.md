@@ -18,16 +18,21 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ## Commands
 
 ```bash
-npm run dev          # Vite SPA dev server
-vercel dev           # full-stack local (SPA + Hono serverless on /api)
+npm run dev          # Vite SPA dev server (proxies /api → localhost:8787)
+npm run dev:api      # local Hono API server (run alongside npm run dev)
+npm run build        # typecheck (tsc --noEmit) + production build
 npm run test         # Vitest (unit-tests the pure generator/validator functions)
-npm run lint         # ESLint + Prettier
-npx prisma migrate dev   # apply schema changes to dev DB
-npx prisma db seed       # seed admin user, Pead dept, staff, fixture rosters
+npm run lint         # ESLint
+npm run format       # Prettier
+npx prisma migrate dev   # apply schema changes to dev DB (Neon)
+npx prisma db seed       # seed admin + editors, Pead dept, staff, configs (idempotent)
+npm run db:fixtures      # load June 2026 fixture rosters + verify tallies
 npx prisma studio        # inspect DB in browser
 ```
 
-Run a single test file: `npx vitest run src/path/to/file.test.ts`
+Run a single test file: `npx vitest run server/services/services.test.ts`
+
+Local full-stack dev = two terminals: `npm run dev:api` + `npm run dev`. Production uses the Vercel catch-all (`api/[[...route]].ts`) instead of `server/dev.ts`. Dev DB is Neon (credentials in gitignored `.env`).
 
 ## Stack
 

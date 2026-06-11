@@ -71,3 +71,16 @@
     font-family: var(--font-sans);
   }
 }
+
+/* Notice-board print view (docs/04 §Export styles): black-on-white, darker
+   grid lines, nav/panels hidden via Tailwind print: variants in components. */
+@media print {
+  :root {
+    --color-paper: #ffffff;
+    --color-grid: #9aa7b3;
+  }
+  @page {
+    size: A4 landscape;
+    margin: 12mm;
+  }
+}
