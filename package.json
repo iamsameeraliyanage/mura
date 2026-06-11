@@ -13,7 +13,8 @@
     "lint": "eslint .",
     "format": "prettier --write .",
     "db:seed": "tsx prisma/seed.ts",
-    "db:fixtures": "tsx prisma/load-fixtures.ts"
+    "db:fixtures": "tsx prisma/load-fixtures.ts",
+    "postinstall": "prisma generate"
   },
   "prisma": {
     "seed": "tsx prisma/seed.ts"
