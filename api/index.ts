@@ -1,4 +1,5 @@
-// Vercel catch-all → Hono app. Do not put logic here (see docs/02).
+// Vercel function → Hono app. All /api/* requests are rewritten here
+// (vercel.json); Hono routes on the original URL. Do not put logic here.
 import { handle } from '@hono/node-server/vercel'
 import { app } from '../server/app'
 

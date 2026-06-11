@@ -46,7 +46,7 @@ Local full-stack dev = two terminals: `npm run dev:api` + `npm run dev`. Product
 | Drag & drop  | dnd-kit                                                                           |
 | Dates        | date-fns — all datetimes stored UTC, rendered as `Asia/Colombo`                   |
 | Image export | html-to-image                                                                     |
-| Backend      | Hono mounted in `api/[[...route]].ts` (Vercel catch-all)                          |
+| Backend      | Hono in `api/index.ts` (all /api/* rewritten there via vercel.json)               |
 | ORM          | Prisma                                                                            |
 | Database     | Neon Postgres (pooled via `DATABASE_URL`; direct via `DIRECT_URL` for migrations) |
 | Validation   | Zod schemas in `shared/schemas.ts` — shared by both sides                         |
@@ -55,7 +55,7 @@ Local full-stack dev = two terminals: `npm run dev:api` + `npm run dev`. Product
 ## Project structure
 
 ```
-api/[[...route]].ts          # Vercel adapter — do not put logic here
+api/index.ts                 # Vercel adapter — do not put logic here
 server/
   app.ts                     # Hono app: routes + middleware
   routes/                    # auth, admin, rosters, unavailability, audit
