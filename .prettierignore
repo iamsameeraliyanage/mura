@@ -1,6 +1,0 @@
-dist/
-node_modules/
-.vercel/
-package-lock.json
-docs/
-api/

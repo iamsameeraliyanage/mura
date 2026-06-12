@@ -1,3 +1,0 @@
-# mura
-
-roasters configuration
