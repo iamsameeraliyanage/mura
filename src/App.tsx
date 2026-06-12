@@ -1,9 +1,12 @@
 import { Outlet } from 'react-router-dom'
+import { ToastProvider } from './components/ui'
 
 export default function App() {
   return (
-    <div className="min-h-screen">
-      <Outlet />
-    </div>
+    <ToastProvider>
+      <div className="min-h-dvh">
+        <Outlet />
+      </div>
+    </ToastProvider>
   )
 }

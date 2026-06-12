@@ -1,0 +1,22 @@
+/* ============================================================
+   MediRoster — Pen colors  ("Digital Colored Pens")
+   The signature identity system. Each person owns a pen color,
+   matching the actual pen they use on the paper roster.
+   Each pen has: -ink (strong text), -bg (tinted chip fill),
+   -dot (the legend swatch). Kept saturated, NOT pastel, so they
+   stay readable on printed / exported rosters.
+   ============================================================ */
+
+:root {
+  /* --- Consultants (casualty roster) --- */
+  --pen-R-ink:  #1b2733;  --pen-R-bg:  #e6e9ec;  --pen-R-dot:  #2b3744; /* R  Dr. Lal Rathnasiri — dark slate */
+  --pen-G-ink:  #6d28d9;  --pen-G-bg:  #f0e9fb;  --pen-G-dot:  #7c3aed; /* G  Dr. Gihan — violet */
+  --pen-Pu-ink: #166534;  --pen-Pu-bg: #e4f1e8;  --pen-Pu-dot: #15803d; /* Pu Prof Unit / Dr. Kasun — forest green */
+  --pen-D-ink:  #b91c1c;  --pen-D-bg:  #fbe7e7;  --pen-D-dot:  #dc2626; /* D  Dr. Dinesha — red */
+
+  /* --- SHO / RHO pool (on-call roster) --- */
+  --pen-S-ink:  #1d4ed8;  --pen-S-bg:  #e7edfc;  --pen-S-dot:  #2563eb; /* S  Sulakshana — blue */
+  --pen-Rt-ink: #0f766e;  --pen-Rt-bg: #e2f1ef;  --pen-Rt-dot: #0d9488; /* R  Ruwanda — teal */
+  --pen-M-ink:  #c2410c;  --pen-M-bg:  #fcecdf;  --pen-M-dot:  #ea580c; /* M  Mekala — orange */
+  --pen-U-ink:  #be185d;  --pen-U-bg:  #fce7f0;  --pen-U-dot:  #db2777; /* U  Udara — pink / rose */
+}

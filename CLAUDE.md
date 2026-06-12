@@ -12,6 +12,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - [docs/02-tech-architecture.md](docs/02-tech-architecture.md) — stack, project structure, API surface, deployment.
 - [docs/03-database-schema.prisma](docs/03-database-schema.prisma) — schema reference (source of truth once built: `prisma/schema.prisma`).
 - [docs/04-design-system.md](docs/04-design-system.md) — Tailwind v4 tokens and component specs.
+- `docs/Mura Web App/` — **the authoritative UI design**: MediRoster design system (`_ds/.../readme.md` + `tokens/*.css`) and one `*.dc.html` mockup per screen (Login, Dashboard, Consultant/SHO rosters, Fairness, Staff, Unavailability, Audit, Share, Mobile). The SPA must match these screens; tokens live in `src/styles/index.css`. The product is branded **MediRoster** in the UI.
 - [docs/05-test-fixtures.json](docs/05-test-fixtures.json) — real paper-roster data (Dec 2025 – June 2026); generators and validators must satisfy `generatorAcceptanceTests`.
 - [docs/06-build-plan-and-claude-md.md](docs/06-build-plan-and-claude-md.md) — milestone build plan (M0–M8).
 

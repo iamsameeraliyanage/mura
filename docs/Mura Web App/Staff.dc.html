@@ -1,0 +1,428 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="stylesheet" href="_ds/mediroster-design-system-2b97303f-2ccc-4ec2-b021-43f0d3671db6/tokens/fonts.css">
+  <link rel="stylesheet" href="_ds/mediroster-design-system-2b97303f-2ccc-4ec2-b021-43f0d3671db6/tokens/colors.css">
+  <link rel="stylesheet" href="_ds/mediroster-design-system-2b97303f-2ccc-4ec2-b021-43f0d3671db6/tokens/pen-colors.css">
+  <link rel="stylesheet" href="_ds/mediroster-design-system-2b97303f-2ccc-4ec2-b021-43f0d3671db6/tokens/typography.css">
+  <link rel="stylesheet" href="_ds/mediroster-design-system-2b97303f-2ccc-4ec2-b021-43f0d3671db6/tokens/spacing.css">
+  <link rel="stylesheet" href="_ds/mediroster-design-system-2b97303f-2ccc-4ec2-b021-43f0d3671db6/tokens/base.css">
+  <link rel="stylesheet" href="_ds/mediroster-design-system-2b97303f-2ccc-4ec2-b021-43f0d3671db6/styles.css">
+  <script src="_ds/mediroster-design-system-2b97303f-2ccc-4ec2-b021-43f0d3671db6/_ds_bundle.js"></script>
+  <style>
+    html, body { margin: 0; padding: 0; background: #fafbfc; }
+  </style>
+</helmet>
+
+<div style="display: flex; height: 100vh; overflow: hidden; background: var(--paper); font-family: var(--font-ui); color: var(--ink);">
+
+  <!-- Sidebar -->
+  <aside style="width: 236px; flex-shrink: 0; display: flex; flex-direction: column; background: var(--surface); border-right: 1px solid var(--grid-line);">
+    <div style="display: flex; align-items: center; gap: 10px; padding: 20px 18px 6px 18px;">
+      <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="var(--teal-600)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M3 6a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v13a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
+        <path d="M3 9.5h18"></path><path d="M8 2v4"></path><path d="M16 2v4"></path>
+        <path d="M7.5 13.5h5.5" stroke="var(--pen-D-dot)"></path>
+        <path d="M7.5 17h8" stroke="var(--pen-S-dot)"></path>
+      </svg>
+      <span style="font-family: var(--font-display); font-weight: 600; font-size: 19px; letter-spacing: -0.01em;">MediRoster</span>
+    </div>
+    <div style="padding: 4px 18px 16px 54px; font-size: 10.5px; font-weight: 600; letter-spacing: 0.04em; color: var(--ink-tertiary);">LRH · PAEDIATRICS</div>
+    <nav style="display: flex; flex-direction: column; gap: 2px; padding: 4px 10px; flex: 1; overflow-y: auto;">
+      <sc-for list="{{ nav }}" as="n" hint-placeholder-count="8">
+        <a href="{{ n.href }}" style="display: flex; align-items: center; gap: 11px; height: 38px; padding: 0 12px; border-radius: 6px; text-decoration: none; white-space: nowrap; font-size: 13.5px; font-weight: {{ n.weight }}; color: {{ n.color }}; background: {{ n.bg }}; transition: background 120ms;" style-hover="background: var(--teal-50);">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="{{ n.icon }}"></path></svg>
+          <span>{{ n.label }}</span>
+        </a>
+      </sc-for>
+    </nav>
+    <div style="padding: 14px; border-top: 1px solid var(--grid-line);">
+      <div style="font-size: 10.5px; font-weight: 600; letter-spacing: 0.04em; color: var(--ink-tertiary); margin-bottom: 8px;">VIEWING AS</div>
+      <div style="display: flex; flex-direction: column; gap: 4px;">
+        <sc-for list="{{ roles }}" as="r" hint-placeholder-count="3">
+          <button data-role="{{ r.key }}" onClick="{{ switchRole }}" style="display: flex; align-items: center; gap: 9px; padding: 7px 9px; border-radius: 6px; border: 1px solid {{ r.border }}; background: {{ r.bg }}; cursor: pointer; text-align: left; font-family: var(--font-ui); width: 100%;" style-hover="border-color: var(--grid-line-strong);">
+            <span style="width: 24px; height: 24px; border-radius: 999px; background: {{ r.dotBg }}; color: {{ r.dotInk }}; font-size: 10.5px; font-weight: 700; display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0;">{{ r.initial }}</span>
+            <span style="flex: 1; min-width: 0;">
+              <span style="display: block; font-size: 12.5px; font-weight: 600; color: var(--ink);">{{ r.label }}</span>
+              <span style="display: block; font-size: 10.5px; color: var(--ink-secondary);">{{ r.caption }}</span>
+            </span>
+            <span style="color: var(--teal-600); font-size: 13px; font-weight: 700;">{{ r.check }}</span>
+          </button>
+        </sc-for>
+      </div>
+    </div>
+  </aside>
+
+  <!-- Main -->
+  <main data-screen-label="Staff and config" style="flex: 1; min-width: 0; overflow-y: auto;">
+    <div style="max-width: 1040px; padding: 30px 28px 44px 28px;">
+
+      <sc-if value="{{ readOnly }}" hint-placeholder-val="{{ false }}">
+        <div style="display: flex; align-items: center; gap: 9px; padding: 9px 14px; margin-bottom: 18px; background: var(--surface-sunken); border: 1px solid var(--grid-line); border-radius: 8px; font-size: 12.5px; color: var(--ink-secondary);">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M5 11h14v10H5z"></path><path d="M8 11V7a4 4 0 0 1 8 0v4"></path></svg>
+          Read-only — staff and configuration are managed by the department admin.
+        </div>
+      </sc-if>
+
+      <div style="display: flex; align-items: flex-end; gap: 16px;">
+        <div style="flex: 1;">
+          <div style="font-size: 11px; font-weight: 600; letter-spacing: 0.04em; color: var(--ink-secondary);">ADMIN · LADY RIDGEWAY HOSPITAL → PAEDIATRICS → PROF UNIT</div>
+          <h1 style="margin: 6px 0 0 0; font-family: var(--font-display); font-weight: 600; font-size: 36px; letter-spacing: -0.01em; line-height: 1.1;">Staff &amp; configuration</h1>
+        </div>
+        <sc-if value="{{ canEdit }}" hint-placeholder-val="{{ true }}">
+          <div style="padding-bottom: 4px;">
+            <x-import component-from-global-scope="MediRosterDesignSystem_2b9730.PrimaryButton" onClick="{{ addOpenClick }}" hint-size="120px,36px">Add staff</x-import>
+          </div>
+        </sc-if>
+      </div>
+
+      <!-- Prof Unit seat -->
+      <div style="display: flex; gap: 14px; margin-top: 24px;">
+        <div style="flex: 1; background: var(--surface); border: 1px solid var(--grid-line); border-radius: 8px; box-shadow: var(--shadow-xs); padding: 17px;">
+          <div style="display: flex; align-items: center; gap: 10px;">
+            <span style="min-width: 34px; height: 28px; padding: 0 9px; border-radius: 6px; display: inline-flex; align-items: center; justify-content: center; font-size: 14px; font-weight: 600; color: var(--pen-Pu-ink); background: var(--pen-Pu-bg);">Pu</span>
+            <div style="flex: 1;">
+              <div style="font-size: 14px; font-weight: 600;">Prof Unit <span style="font-size: 9.5px; font-weight: 700; letter-spacing: 0.05em; color: var(--draft-ink); background: var(--draft-bg); border-radius: 4px; padding: 2px 6px; vertical-align: 2px;">SEAT</span></div>
+              <div style="font-size: 11.5px; color: var(--ink-secondary); margin-top: 2px;">A unit, not a person — history stays with the seat when the holder changes.</div>
+            </div>
+            <div style="text-align: right;">
+              <div style="font-size: 10.5px; font-weight: 600; letter-spacing: 0.04em; color: var(--ink-tertiary);">CURRENT HOLDER</div>
+              <div style="font-size: 13.5px; font-weight: 600; margin-top: 2px;">{{ seatHolder }}</div>
+            </div>
+            <sc-if value="{{ canEdit }}" hint-placeholder-val="{{ true }}">
+              <button onClick="{{ seatEditOpen }}" style="height: 30px; padding: 0 12px; border: 1px solid var(--grid-line); border-radius: 6px; background: var(--surface); font-family: var(--font-ui); font-size: 12px; font-weight: 600; color: var(--teal-700); cursor: pointer;" style-hover="background: var(--teal-50);"><span style="white-space: nowrap;">Change holder</span></button>
+            </sc-if>
+          </div>
+        </div>
+      </div>
+
+      <!-- Staff tables -->
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-top: 14px; align-items: start;">
+        <div style="background: var(--surface); border: 1px solid var(--grid-line); border-radius: 8px; box-shadow: var(--shadow-xs); overflow: hidden;">
+          <div style="display: flex; align-items: baseline; justify-content: space-between; padding: 14px 16px 10px 16px;">
+            <span style="font-size: 15px; font-weight: 600;">Consultant layer</span>
+            <span style="font-family: var(--font-mono); font-size: 11px; color: var(--ink-secondary);">4 SEATS</span>
+          </div>
+          <sc-for list="{{ consultants }}" as="c" hint-placeholder-count="4">
+            <div style="display: flex; align-items: center; gap: 11px; padding: 11px 16px; border-top: 1px solid var(--grid-line);">
+              <span style="width: 14px; height: 14px; border-radius: 4px; background: {{ c.dot }}; flex-shrink: 0;" title="pen color"></span>
+              <span style="min-width: 30px; height: 24px; padding: 0 7px; border-radius: 6px; display: inline-flex; align-items: center; justify-content: center; font-size: 12.5px; font-weight: 600; color: {{ c.ink }}; background: {{ c.bg }};">{{ c.code }}</span>
+              <span style="flex: 1; min-width: 0;">
+                <span style="display: block; font-size: 13.5px; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{ c.name }}</span>
+                <span style="display: block; font-size: 11px; color: var(--ink-secondary);">{{ c.sub }}</span>
+              </span>
+              <span style="font-family: var(--font-mono); font-size: 11px; color: var(--ink-secondary); white-space: nowrap;">{{ c.since }}</span>
+            </div>
+          </sc-for>
+        </div>
+
+        <div style="background: var(--surface); border: 1px solid var(--grid-line); border-radius: 8px; box-shadow: var(--shadow-xs); overflow: hidden;">
+          <div style="display: flex; align-items: baseline; justify-content: space-between; padding: 14px 16px 10px 16px;">
+            <span style="font-size: 15px; font-weight: 600;">SHO/RHO pool</span>
+            <span style="font-family: var(--font-mono); font-size: 11px; color: var(--ink-secondary);">{{ poolCount }}</span>
+          </div>
+          <sc-for list="{{ pool }}" as="c" hint-placeholder-count="4">
+            <div style="display: flex; align-items: center; gap: 11px; padding: 11px 16px; border-top: 1px solid var(--grid-line); opacity: {{ c.opacity }};">
+              <span style="width: 14px; height: 14px; border-radius: 4px; background: {{ c.dot }}; flex-shrink: 0;" title="pen color"></span>
+              <span style="min-width: 30px; height: 24px; padding: 0 7px; border-radius: 6px; display: inline-flex; align-items: center; justify-content: center; font-size: 12.5px; font-weight: 600; color: {{ c.ink }}; background: {{ c.bg }};">{{ c.code }}</span>
+              <span style="flex: 1; min-width: 0;">
+                <span style="display: block; font-size: 13.5px; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{ c.name }} <span style="font-size: 9.5px; font-weight: 700; letter-spacing: 0.04em; color: {{ c.noteInk }};">{{ c.note }}</span></span>
+                <span style="display: block; font-size: 11px; color: var(--ink-secondary);">{{ c.sub }}</span>
+              </span>
+              <span style="font-family: var(--font-mono); font-size: 11px; color: var(--ink-secondary); white-space: nowrap;">{{ c.since }}</span>
+            </div>
+          </sc-for>
+          <div style="padding: 10px 16px; border-top: 1px solid var(--grid-line); font-size: 11.5px; line-height: 1.5; color: var(--ink-secondary); background: var(--surface-sunken);">RHOs rotate out every few months. New members start their fairness counts at 0 — history of leavers is kept permanently.</div>
+        </div>
+      </div>
+
+      <!-- Editors -->
+      <div style="margin-top: 14px; background: var(--surface); border: 1px solid var(--grid-line); border-radius: 8px; box-shadow: var(--shadow-xs); overflow: hidden;">
+        <div style="display: flex; align-items: baseline; justify-content: space-between; padding: 14px 16px 10px 16px;">
+          <span style="font-size: 15px; font-weight: 600;">Editor accounts</span>
+          <span style="font-family: var(--font-mono); font-size: 11px; color: var(--ink-secondary);">NO SELF-SIGNUP · SCOPED TO PROF UNIT</span>
+        </div>
+        <sc-for list="{{ users }}" as="u" hint-placeholder-count="3">
+          <div style="display: flex; align-items: center; gap: 11px; padding: 11px 16px; border-top: 1px solid var(--grid-line);">
+            <span style="width: 26px; height: 26px; border-radius: 999px; background: {{ u.dotBg }}; color: {{ u.dotInk }}; font-size: 11px; font-weight: 700; display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0;">{{ u.initial }}</span>
+            <span style="flex: 1; min-width: 0;">
+              <span style="display: block; font-size: 13.5px; font-weight: 500;">{{ u.name }}</span>
+              <span style="display: block; font-family: var(--font-mono); font-size: 11px; color: var(--ink-secondary);">{{ u.email }}</span>
+            </span>
+            <span style="display: inline-flex; align-items: center; height: 20px; padding: 0 8px; font-size: 10px; font-weight: 700; letter-spacing: 0.04em; color: {{ u.roleInk }}; background: {{ u.roleBg }}; border-radius: 4px;">{{ u.role }}</span>
+            <span style="font-size: 12px; color: var(--ink-secondary); width: 280px;">{{ u.powers }}</span>
+          </div>
+        </sc-for>
+      </div>
+
+      <!-- Shift config -->
+      <div style="margin-top: 14px; background: var(--surface); border: 1px solid var(--grid-line); border-radius: 8px; box-shadow: var(--shadow-xs); overflow: hidden;">
+        <div style="display: flex; align-items: baseline; justify-content: space-between; padding: 14px 16px 10px 16px;">
+          <span style="font-size: 15px; font-weight: 600;">Duty types &amp; shift times</span>
+          <span style="font-family: var(--font-mono); font-size: 11px; color: var(--ink-secondary);">PEAD DEFAULTS · CONFIGURABLE PER DEPARTMENT</span>
+        </div>
+        <div style="display: flex; gap: 12px; padding: 8px 16px; border-top: 1px solid var(--grid-line); font-size: 10px; font-weight: 600; letter-spacing: 0.04em; color: var(--ink-tertiary);">
+          <span style="width: 150px;">DUTY</span>
+          <span style="width: 92px;">LAYER</span>
+          <span style="width: 230px;">SHIFT</span>
+          <span style="width: 44px; text-align: right;">HOURS</span>
+          <span style="flex: 1;">RULE</span>
+        </div>
+        <sc-for list="{{ shifts }}" as="s" hint-placeholder-count="6">
+          <div style="display: flex; gap: 12px; align-items: center; padding: 10px 16px; border-top: 1px solid var(--grid-line);">
+            <span style="width: 150px; font-size: 13px; font-weight: 600;">{{ s.duty }}</span>
+            <span style="width: 92px;"><span style="display: inline-flex; height: 19px; padding: 0 7px; align-items: center; font-size: 10px; font-weight: 700; letter-spacing: 0.04em; color: var(--ink-secondary); background: var(--surface-sunken); border-radius: 4px;">{{ s.layer }}</span></span>
+            <span style="width: 230px; font-family: var(--font-mono); font-size: 12px; color: var(--ink);">{{ s.time }}</span>
+            <span style="width: 44px; text-align: right; font-family: var(--font-mono); font-size: 12px; color: var(--ink-secondary);">{{ s.hours }}</span>
+            <span style="flex: 1; font-size: 12px; color: var(--ink-secondary);">{{ s.note }}</span>
+          </div>
+        </sc-for>
+      </div>
+    </div>
+  </main>
+
+  <!-- Add staff modal -->
+  <sc-if value="{{ addShow }}" hint-placeholder-val="{{ false }}">
+    <div onClick="{{ addClose }}" style="position: fixed; inset: 0; z-index: 60; background: rgba(27,39,51,0.18);"></div>
+    <div style="position: fixed; left: 50%; top: 44%; transform: translate(-50%, -50%); z-index: 61; width: 420px; background: var(--surface); border: 1px solid var(--grid-line); border-radius: 8px; box-shadow: var(--shadow-lift); padding: 22px;">
+      <div style="font-family: var(--font-display); font-weight: 600; font-size: 20px;">Add to the SHO/RHO pool</div>
+      <div style="display: flex; gap: 10px; margin-top: 16px;">
+        <div style="flex: 1;">
+          <div style="font-size: 10.5px; font-weight: 600; letter-spacing: 0.04em; color: var(--ink-secondary);">FULL NAME</div>
+          <input value="{{ addName }}" onChange="{{ addNameChange }}" placeholder="e.g. Nilmini" style="width: 100%; box-sizing: border-box; height: 36px; margin-top: 6px; padding: 0 11px; border: 1px solid var(--grid-line-strong); border-radius: 4px; font-family: var(--font-ui); font-size: 13.5px; color: var(--ink); outline: none;" style-focus="border-color: var(--teal-600); box-shadow: 0 0 0 2px var(--teal-50);">
+        </div>
+        <div style="width: 88px;">
+          <div style="font-size: 10.5px; font-weight: 600; letter-spacing: 0.04em; color: var(--ink-secondary);">CODE</div>
+          <input value="{{ addCode }}" onChange="{{ addCodeChange }}" placeholder="N" style="width: 100%; box-sizing: border-box; height: 36px; margin-top: 6px; padding: 0 11px; border: 1px solid var(--grid-line-strong); border-radius: 4px; font-family: var(--font-mono); font-size: 13.5px; color: var(--ink); outline: none;" style-focus="border-color: var(--teal-600); box-shadow: 0 0 0 2px var(--teal-50);">
+        </div>
+      </div>
+      <div style="display: flex; gap: 10px; margin-top: 14px;">
+        <div style="width: 130px;">
+          <div style="font-size: 10.5px; font-weight: 600; letter-spacing: 0.04em; color: var(--ink-secondary);">JOB TITLE</div>
+          <div style="display: flex; gap: 4px; margin-top: 6px;">
+            <button data-kind="SHO" onClick="{{ addKindClick }}" style="flex: 1; height: 32px; border: 1px solid {{ addShoBorder }}; border-radius: 6px; background: {{ addShoBg }}; font-family: var(--font-ui); font-size: 12px; font-weight: 600; color: var(--ink); cursor: pointer;">SHO</button>
+            <button data-kind="RHO" onClick="{{ addKindClick }}" style="flex: 1; height: 32px; border: 1px solid {{ addRhoBorder }}; border-radius: 6px; background: {{ addRhoBg }}; font-family: var(--font-ui); font-size: 12px; font-weight: 600; color: var(--ink); cursor: pointer;">RHO</button>
+          </div>
+          <div style="font-size: 10px; color: var(--ink-tertiary); margin-top: 5px;">Profile info only — one pool, same duties.</div>
+        </div>
+        <div style="flex: 1;">
+          <div style="font-size: 10.5px; font-weight: 600; letter-spacing: 0.04em; color: var(--ink-secondary);">PEN COLOR</div>
+          <div style="display: flex; gap: 6px; margin-top: 8px; flex-wrap: wrap;">
+            <sc-for list="{{ penChoices }}" as="p" hint-placeholder-count="8">
+              <button data-pen="{{ p.key }}" onClick="{{ addPenClick }}" title="{{ p.title }}" style="width: 26px; height: 26px; border-radius: 6px; border: 2px solid {{ p.border }}; background: {{ p.fill }}; cursor: {{ p.cursor }}; opacity: {{ p.opacity }}; padding: 0;"></button>
+            </sc-for>
+          </div>
+          <div style="font-size: 10px; color: var(--ink-tertiary); margin-top: 7px;">Dimmed pens are taken. Doctors recognise their color before their letter.</div>
+        </div>
+      </div>
+      <div style="margin-top: 14px;">
+        <div style="font-size: 10.5px; font-weight: 600; letter-spacing: 0.04em; color: var(--ink-secondary);">ACTIVE FROM</div>
+        <input type="date" value="{{ addFrom }}" onChange="{{ addFromChange }}" style="box-sizing: border-box; height: 36px; margin-top: 6px; padding: 0 11px; border: 1px solid var(--grid-line-strong); border-radius: 4px; font-family: var(--font-mono); font-size: 12.5px; color: var(--ink); outline: none;" style-focus="border-color: var(--teal-600); box-shadow: 0 0 0 2px var(--teal-50);">
+        <span style="font-size: 11px; color: var(--ink-tertiary); margin-left: 10px;">Counts start at 0 from this date.</span>
+      </div>
+      <div style="display: flex; justify-content: flex-end; gap: 8px; margin-top: 20px;">
+        <button onClick="{{ addClose }}" style="height: 34px; padding: 0 14px; border: 1px solid var(--grid-line); border-radius: 6px; background: var(--surface); font-family: var(--font-ui); font-size: 13px; font-weight: 600; color: var(--ink); cursor: pointer;" style-hover="background: var(--surface-sunken);">Cancel</button>
+        <button onClick="{{ addSave }}" style="height: 34px; padding: 0 16px; border: none; border-radius: 6px; background: var(--teal-600); font-family: var(--font-ui); font-size: 13px; font-weight: 600; color: #ffffff; cursor: pointer;" style-hover="background: var(--teal-700);">Add to pool</button>
+      </div>
+    </div>
+  </sc-if>
+
+  <!-- Seat holder modal -->
+  <sc-if value="{{ seatShow }}" hint-placeholder-val="{{ false }}">
+    <div onClick="{{ seatClose }}" style="position: fixed; inset: 0; z-index: 60; background: rgba(27,39,51,0.18);"></div>
+    <div style="position: fixed; left: 50%; top: 40%; transform: translate(-50%, -50%); z-index: 61; width: 380px; background: var(--surface); border: 1px solid var(--grid-line); border-radius: 8px; box-shadow: var(--shadow-lift); padding: 22px;">
+      <div style="font-family: var(--font-display); font-weight: 600; font-size: 20px;">Change Prof Unit holder</div>
+      <div style="margin-top: 6px; font-size: 12.5px; line-height: 1.5; color: var(--ink-secondary);">Casualty history and fairness counts stay with the Pu seat — only the name changes.</div>
+      <div style="font-size: 10.5px; font-weight: 600; letter-spacing: 0.04em; color: var(--ink-secondary); margin-top: 14px;">NEW HOLDER</div>
+      <input value="{{ seatDraft }}" onChange="{{ seatDraftChange }}" style="width: 100%; box-sizing: border-box; height: 36px; margin-top: 6px; padding: 0 11px; border: 1px solid var(--grid-line-strong); border-radius: 4px; font-family: var(--font-ui); font-size: 13.5px; color: var(--ink); outline: none;" style-focus="border-color: var(--teal-600); box-shadow: 0 0 0 2px var(--teal-50);">
+      <div style="display: flex; justify-content: flex-end; gap: 8px; margin-top: 18px;">
+        <button onClick="{{ seatClose }}" style="height: 34px; padding: 0 14px; border: 1px solid var(--grid-line); border-radius: 6px; background: var(--surface); font-family: var(--font-ui); font-size: 13px; font-weight: 600; color: var(--ink); cursor: pointer;" style-hover="background: var(--surface-sunken);">Cancel</button>
+        <button onClick="{{ seatSave }}" style="height: 34px; padding: 0 16px; border: none; border-radius: 6px; background: var(--teal-600); font-family: var(--font-ui); font-size: 13px; font-weight: 600; color: #ffffff; cursor: pointer;" style-hover="background: var(--teal-700);">Save</button>
+      </div>
+    </div>
+  </sc-if>
+
+  <!-- Toast -->
+  <sc-if value="{{ toastShow }}" hint-placeholder-val="{{ false }}">
+    <div style="position: fixed; left: 50%; bottom: 26px; transform: translateX(-50%); z-index: 70; background: var(--ink); color: #ffffff; font-size: 13px; font-weight: 500; padding: 10px 16px; border-radius: 6px; box-shadow: var(--shadow-lift); white-space: nowrap;">{{ toastText }}</div>
+  </sc-if>
+</div>
+
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+class Component extends DCLogic {
+  state = {
+    ready: false, role: "ADMIN",
+    seatHolder: "Dr. Kasun",
+    extraPool: [],
+    addOpen: false, addName: "", addCode: "", addKind: "RHO", addPen: null, addFrom: "2026-08-01",
+    seatOpen: false, seatDraft: "",
+    toast: null,
+  };
+
+  async componentDidMount() {
+    const M = await import("./data/mura-data.js");
+    this._M = M;
+    this.setState({ ready: true, role: M.getRole() });
+  }
+
+  showToast(t) {
+    clearTimeout(this._toastT);
+    this.setState({ toast: t });
+    this._toastT = setTimeout(() => this.setState({ toast: null }), 3200);
+  }
+
+  switchRole = (e) => {
+    const r = e.currentTarget.getAttribute("data-role");
+    this._M.setRole(r);
+    this.setState({ role: r });
+  };
+
+  addOpenClick = () => this.setState({ addOpen: true });
+  addClose = () => this.setState({ addOpen: false });
+  addNameChange = (e) => this.setState({ addName: e.target.value });
+  addCodeChange = (e) => this.setState({ addCode: e.target.value.slice(0, 2) });
+  addKindClick = (e) => this.setState({ addKind: e.currentTarget.getAttribute("data-kind") });
+  addFromChange = (e) => this.setState({ addFrom: e.target.value });
+  addPenClick = (e) => {
+    const pen = e.currentTarget.getAttribute("data-pen");
+    if (this.takenPens().indexOf(pen) >= 0) return;
+    this.setState({ addPen: pen });
+  };
+  addSave = () => {
+    const st = this.state;
+    if (!st.addName || !st.addPen) { this.showToast("Name and a free pen color are required"); return; }
+    const extra = st.extraPool.concat([{
+      name: st.addName,
+      code: st.addCode || st.addName.slice(0, 1).toUpperCase(),
+      kind: st.addKind, pen: st.addPen, from: st.addFrom,
+    }]);
+    this.setState({ extraPool: extra, addOpen: false, addName: "", addCode: "", addPen: null });
+    this.showToast(st.addName + " added — counts start at 0 from " + st.addFrom);
+  };
+
+  seatEditOpen = () => this.setState({ seatOpen: true, seatDraft: this.state.seatHolder });
+  seatClose = () => this.setState({ seatOpen: false });
+  seatDraftChange = (e) => this.setState({ seatDraft: e.target.value });
+  seatSave = () => {
+    this.setState({ seatHolder: this.state.seatDraft || this.state.seatHolder, seatOpen: false });
+    this.showToast("Prof Unit holder updated — history stays with the seat");
+  };
+
+  takenPens() {
+    /* pens used within the SHO/RHO pool — consultant pens stay available for the pool layer */
+    return ["S", "Rt", "M", "U"].concat(this.state.extraPool.map((x) => x.pen));
+  }
+
+  renderVals() {
+    const st = this.state;
+    if (!st.ready) return {};
+    const M = this._M;
+    const canEdit = st.role === "ADMIN";
+
+    const nav = M.NAV.filter((n) => n.roles.indexOf(st.role) >= 0).map((n) => ({
+      ...n,
+      weight: n.id === "staff" ? 600 : 500,
+      color: n.id === "staff" ? "var(--teal-700)" : "var(--ink-secondary)",
+      bg: n.id === "staff" ? "var(--teal-50)" : "transparent",
+    }));
+    const roleDots = { ADMIN: ["var(--surface-sunken)", "var(--ink-secondary)"], E1: ["var(--pen-G-bg)", "var(--pen-G-ink)"], E2: ["var(--pen-Rt-bg)", "var(--pen-Rt-ink)"] };
+    const roles = ["ADMIN", "E1", "E2"].map((k) => ({
+      key: k, label: M.ROLES[k].label, caption: M.ROLES[k].caption,
+      initial: M.ROLES[k].label.replace("Dr. ", "").slice(0, 1),
+      dotBg: roleDots[k][0], dotInk: roleDots[k][1],
+      border: st.role === k ? "var(--teal-600)" : "var(--grid-line)",
+      bg: st.role === k ? "var(--teal-50)" : "var(--surface)",
+      check: st.role === k ? "✓" : "",
+    }));
+
+    const consultants = M.CONSULTANTS.map((c) => {
+      const p = M.PEOPLE[c];
+      return {
+        code: p.code,
+        name: p.seat ? p.name + " — " + this.state.seatHolder : p.name,
+        sub: p.seat ? "Seat · holder can change" : "Consultant",
+        since: "DEC 2025",
+        ink: "var(--pen-" + c + "-ink)", bg: "var(--pen-" + c + "-bg)", dot: "var(--pen-" + c + "-dot)",
+      };
+    });
+
+    const basePool = M.SHOS.map((k) => {
+      const p = M.PEOPLE[k];
+      return {
+        code: p.code, name: p.name,
+        sub: p.role + " · combined pool, same duties",
+        since: k === "U" ? "JUN 2026 →" : "JAN 2026 →",
+        note: k === "U" ? "REJOINED" : "",
+        noteInk: "var(--teal-700)",
+        ink: "var(--pen-" + k + "-ink)", bg: "var(--pen-" + k + "-bg)", dot: "var(--pen-" + k + "-dot)",
+        opacity: 1,
+      };
+    });
+    const extras = st.extraPool.map((x) => ({
+      code: x.code, name: x.name,
+      sub: x.kind + " · combined pool, same duties",
+      since: x.from.slice(0, 7).replace("-", " ").toUpperCase() + " →",
+      note: "NEW", noteInk: "var(--draft-ink)",
+      ink: "var(--pen-" + x.pen + "-ink)", bg: "var(--pen-" + x.pen + "-bg)", dot: "var(--pen-" + x.pen + "-dot)",
+      opacity: 1,
+    }));
+    const pool = basePool.concat(extras);
+
+    const users = [
+      { name: "Admin", email: "admin@mura.lk", initial: "A", dotBg: "var(--surface-sunken)", dotInk: "var(--ink-secondary)", role: "ADMIN", roleInk: "var(--ink-secondary)", roleBg: "var(--surface-sunken)", powers: "Hospitals, departments, staff, users, shift config" },
+      { name: "Dr. Wasana", email: "wasana@health.gov.lk", initial: "W", dotBg: "var(--pen-G-bg)", dotInk: "var(--pen-G-ink)", role: "CONSULTANT EDITOR", roleInk: "var(--draft-ink)", roleBg: "var(--draft-bg)", powers: "Creates & publishes the consultant casualty roster" },
+      { name: "Ruwanda", email: "ruwanda@health.gov.lk", initial: "R", dotBg: "var(--pen-Rt-bg)", dotInk: "var(--pen-Rt-ink)", role: "SHO EDITOR", roleInk: "var(--published-ink)", roleBg: "var(--published-bg)", powers: "Builds the SHO/RHO roster once consultants publish" },
+    ];
+
+    const taken = this.takenPens();
+    const allPens = ["R", "G", "Pu", "D", "S", "Rt", "M", "U"];
+    const penChoices = allPens.map((k) => {
+      const isTaken = taken.indexOf(k) >= 0;
+      return {
+        key: k,
+        fill: "var(--pen-" + k + "-dot)",
+        border: st.addPen === k ? "var(--ink)" : "transparent",
+        opacity: isTaken ? 0.22 : 1,
+        cursor: isTaken ? "not-allowed" : "pointer",
+        title: M.PEOPLE[k] ? "Taken — " + M.PEOPLE[k].short : "Available",
+      };
+    });
+
+    return {
+      nav, roles, switchRole: this.switchRole,
+      readOnly: !canEdit, canEdit,
+      seatHolder: st.seatHolder,
+      seatEditOpen: this.seatEditOpen,
+      consultants, pool,
+      poolCount: "POOL OF " + pool.length + " · 2 SHO + " + (pool.length - 2) + " RHO",
+      users,
+      shifts: M.SHIFT_CONFIG,
+      addShow: st.addOpen, addOpenClick: this.addOpenClick, addClose: this.addClose,
+      addName: st.addName, addNameChange: this.addNameChange,
+      addCode: st.addCode, addCodeChange: this.addCodeChange,
+      addKindClick: this.addKindClick,
+      addShoBorder: st.addKind === "SHO" ? "var(--teal-600)" : "var(--grid-line)",
+      addShoBg: st.addKind === "SHO" ? "var(--teal-50)" : "var(--surface)",
+      addRhoBorder: st.addKind === "RHO" ? "var(--teal-600)" : "var(--grid-line)",
+      addRhoBg: st.addKind === "RHO" ? "var(--teal-50)" : "var(--surface)",
+      penChoices, addPenClick: this.addPenClick,
+      addFrom: st.addFrom, addFromChange: this.addFromChange,
+      addSave: this.addSave,
+      seatShow: st.seatOpen, seatClose: this.seatClose,
+      seatDraft: st.seatDraft, seatDraftChange: this.seatDraftChange, seatSave: this.seatSave,
+      toastShow: !!st.toast, toastText: st.toast || "",
+    };
+  }
+}
+
+</script>
+</body>
+</html>

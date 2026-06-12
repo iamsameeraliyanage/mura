@@ -1,0 +1,51 @@
+/* ============================================================
+   MediRoster — Color tokens
+   Quiet neutral chrome so the pen-color chips stay the only
+   vivid elements on the page. One accent: scrub teal.
+   ============================================================ */
+
+:root {
+  /* --- Base neutrals: charting paper --- */
+  --paper:          #fafbfc;   /* app background — off-white charting paper */
+  --surface:        #ffffff;   /* cards, calendar cells */
+  --surface-sunken: #f3f5f7;   /* inset wells, table stripes */
+  --grid-line:      #e4e9ee;   /* soft blue-grey grid / hairlines */
+  --grid-line-strong:#cdd6de;  /* stronger divider when needed */
+
+  /* --- Ink / text --- */
+  --ink:            #1b2733;   /* primary text — dark slate, not black */
+  --ink-secondary:  #5c6b7a;   /* secondary / labels */
+  --ink-tertiary:   #8b98a5;   /* captions, disabled-ish */
+  --ink-on-accent:  #ffffff;   /* text on teal */
+
+  /* --- Brand accent: scrub teal (use sparingly) --- */
+  --teal-600:       #0d9488;   /* primary accent */
+  --teal-700:       #0b7c72;   /* hover / pressed */
+  --teal-50:        #e6f4f2;   /* faint teal wash / focus halo */
+  --teal-ring:      #0d9488;   /* focus ring + valid drop target */
+
+  /* --- Duty flag semantics (distinct from pen colors) --- */
+  --cash-ink:       #b45309;   /* casualty / cash ◆ amber */
+  --cash-bg:        #fdf3e3;   /* warm cream */
+  --postcash-ink:   #4f46e5;   /* post-cash ■ indigo */
+  --postcash-bg:    #eef0fd;   /* soft lavender */
+
+  /* --- States --- */
+  --weekend-bg:     #f4f3f9;   /* very subtle lavender-grey weekend tint */
+  --holiday-bg:     #fbf0f1;   /* public-holiday tint (soft rose) */
+  --danger:         #b91c1c;   /* conflict ring / destructive */
+  --danger-bg:      #fdecec;
+  --danger-ring:    #b91c1c;
+
+  /* --- Status badges --- */
+  --draft-ink:      #6d28d9;   /* DRAFT — purple */
+  --draft-bg:       #f1ecfb;
+  --published-ink:  #15803d;   /* PUBLISHED — green */
+  --published-bg:   #e7f4ec;
+
+  /* --- Fairness bars --- */
+  --bar-over:       #b45309;   /* over average — amber */
+  --bar-under:      #15803d;   /* under average — green */
+  --bar-balanced:   #8b98a5;   /* balanced — grey */
+  --bar-track:      #eef1f4;
+}

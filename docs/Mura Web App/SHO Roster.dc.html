@@ -1,0 +1,831 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="stylesheet" href="_ds/mediroster-design-system-2b97303f-2ccc-4ec2-b021-43f0d3671db6/tokens/fonts.css">
+  <link rel="stylesheet" href="_ds/mediroster-design-system-2b97303f-2ccc-4ec2-b021-43f0d3671db6/tokens/colors.css">
+  <link rel="stylesheet" href="_ds/mediroster-design-system-2b97303f-2ccc-4ec2-b021-43f0d3671db6/tokens/pen-colors.css">
+  <link rel="stylesheet" href="_ds/mediroster-design-system-2b97303f-2ccc-4ec2-b021-43f0d3671db6/tokens/typography.css">
+  <link rel="stylesheet" href="_ds/mediroster-design-system-2b97303f-2ccc-4ec2-b021-43f0d3671db6/tokens/spacing.css">
+  <link rel="stylesheet" href="_ds/mediroster-design-system-2b97303f-2ccc-4ec2-b021-43f0d3671db6/tokens/base.css">
+  <link rel="stylesheet" href="_ds/mediroster-design-system-2b97303f-2ccc-4ec2-b021-43f0d3671db6/styles.css">
+  <script src="_ds/mediroster-design-system-2b97303f-2ccc-4ec2-b021-43f0d3671db6/_ds_bundle.js"></script>
+  <style>
+    html, body { margin: 0; padding: 0; background: #fafbfc; }
+    @keyframes mrPulse { 0% { box-shadow: inset 0 0 0 3px #0d9488; } 100% { box-shadow: inset 0 0 0 3px rgba(13,148,136,0); } }
+    @keyframes mrShake { 20%, 60% { transform: translateX(3px); } 40%, 80% { transform: translateX(-3px); } }
+  </style>
+</helmet>
+
+<div style="display: flex; height: 100vh; overflow: hidden; background: var(--paper); font-family: var(--font-ui); color: var(--ink);">
+
+  <!-- ──────────────── Sidebar ──────────────── -->
+  <aside style="width: 236px; flex-shrink: 0; display: flex; flex-direction: column; background: var(--surface); border-right: 1px solid var(--grid-line);">
+    <div style="display: flex; align-items: center; gap: 10px; padding: 20px 18px 6px 18px;">
+      <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="var(--teal-600)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M3 6a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v13a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
+        <path d="M3 9.5h18"></path><path d="M8 2v4"></path><path d="M16 2v4"></path>
+        <path d="M7.5 13.5h5.5" stroke="var(--pen-D-dot)"></path>
+        <path d="M7.5 17h8" stroke="var(--pen-S-dot)"></path>
+      </svg>
+      <span style="font-family: var(--font-display); font-weight: 600; font-size: 19px; letter-spacing: -0.01em;">MediRoster</span>
+    </div>
+    <div style="padding: 4px 18px 16px 54px; font-size: 10.5px; font-weight: 600; letter-spacing: 0.04em; color: var(--ink-tertiary);">LRH · PAEDIATRICS</div>
+
+    <nav style="display: flex; flex-direction: column; gap: 2px; padding: 4px 10px; flex: 1; overflow-y: auto;">
+      <sc-for list="{{ nav }}" as="n" hint-placeholder-count="8">
+        <a href="{{ n.href }}" style="display: flex; align-items: center; gap: 11px; height: 38px; padding: 0 12px; border-radius: 6px; text-decoration: none; white-space: nowrap; font-size: 13.5px; font-weight: {{ n.weight }}; color: {{ n.color }}; background: {{ n.bg }}; transition: background 120ms;" style-hover="background: var(--teal-50);">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="{{ n.icon }}"></path></svg>
+          <span>{{ n.label }}</span>
+        </a>
+      </sc-for>
+    </nav>
+
+    <div style="padding: 14px; border-top: 1px solid var(--grid-line);">
+      <div style="font-size: 10.5px; font-weight: 600; letter-spacing: 0.04em; color: var(--ink-tertiary); margin-bottom: 8px;">VIEWING AS</div>
+      <div style="display: flex; flex-direction: column; gap: 4px;">
+        <sc-for list="{{ roles }}" as="r" hint-placeholder-count="3">
+          <button data-role="{{ r.key }}" onClick="{{ switchRole }}" style="display: flex; align-items: center; gap: 9px; padding: 7px 9px; border-radius: 6px; border: 1px solid {{ r.border }}; background: {{ r.bg }}; cursor: pointer; text-align: left; font-family: var(--font-ui); width: 100%;" style-hover="border-color: var(--grid-line-strong);">
+            <span style="width: 24px; height: 24px; border-radius: 999px; background: {{ r.dotBg }}; color: {{ r.dotInk }}; font-size: 10.5px; font-weight: 700; display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0;">{{ r.initial }}</span>
+            <span style="flex: 1; min-width: 0;">
+              <span style="display: block; font-size: 12.5px; font-weight: 600; color: var(--ink);">{{ r.label }}</span>
+              <span style="display: block; font-size: 10.5px; color: var(--ink-secondary);">{{ r.caption }}</span>
+            </span>
+            <span style="color: var(--teal-600); font-size: 13px; font-weight: 700;">{{ r.check }}</span>
+          </button>
+        </sc-for>
+      </div>
+    </div>
+  </aside>
+
+  <!-- ──────────────── Main ──────────────── -->
+  <main data-screen-label="SHO/RHO roster" style="flex: 1; display: flex; flex-direction: column; min-width: 0; overflow-y: auto;">
+
+    <sc-if value="{{ readOnly }}" hint-placeholder-val="{{ false }}">
+      <div style="display: flex; align-items: center; gap: 9px; padding: 9px 28px; background: var(--surface-sunken); border-bottom: 1px solid var(--grid-line); font-size: 12.5px; color: var(--ink-secondary);">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M5 11h14v10H5z"></path><path d="M8 11V7a4 4 0 0 1 8 0v4"></path></svg>
+        Read-only — the SHO/RHO roster is edited by Ruwanda.
+      </div>
+    </sc-if>
+
+    <!-- Header -->
+    <header style="display: flex; align-items: flex-end; gap: 20px; padding: 26px 28px 18px 28px;">
+      <div style="flex: 1; min-width: 0;">
+        <div style="display: flex; align-items: center; gap: 10px; font-size: 11px; font-weight: 600; letter-spacing: 0.04em; color: var(--ink-secondary); margin-bottom: 6px; flex-wrap: wrap;">
+          SHO/RHO ON-CALL ROSTER
+          <sc-if value="{{ showStatus }}" hint-placeholder-val="{{ true }}">
+            <x-import component-from-global-scope="MediRosterDesignSystem_2b9730.StatusBadge" status="{{ statusKey }}" version="{{ statusVersion }}" hint-size="110px,24px"></x-import>
+          </sc-if>
+          <sc-if value="{{ edited }}" hint-placeholder-val="{{ false }}">
+            <span style="font-size: 11px; font-weight: 600; color: var(--draft-ink); background: var(--draft-bg); border-radius: 4px; padding: 4px 8px; letter-spacing: 0.04em;">EDITED — RE-PUBLISH TO SHARE</span>
+          </sc-if>
+        </div>
+        <h1 style="margin: 0; font-family: var(--font-display); font-weight: 600; font-size: 40px; letter-spacing: -0.01em; line-height: 1.05; color: var(--ink);">{{ monthName }}</h1>
+        <div style="margin-top: 7px; font-family: var(--font-mono); font-size: 12px; color: var(--ink-secondary);">{{ metaLine }}</div>
+      </div>
+
+      <div style="display: flex; align-items: center; gap: 8px; padding-bottom: 4px;">
+        <button onClick="{{ scenarioToggle }}" style="height: 32px; padding: 0 12px; border: 1px dashed var(--grid-line-strong); border-radius: 6px; background: var(--surface); font-family: var(--font-ui); font-size: 12px; font-weight: 600; color: var(--ink-secondary); cursor: pointer; white-space: nowrap;" style-hover="border-color: var(--cash-ink); color: var(--cash-ink);">{{ scenarioLabel }}</button>
+        <div style="display: flex; background: var(--surface); border: 1px solid var(--grid-line); border-radius: 6px; padding: 3px; gap: 2px;">
+          <sc-for list="{{ monthTabs }}" as="t" hint-placeholder-count="2">
+            <button data-key="{{ t.key }}" onClick="{{ monthTabClick }}" style="display: inline-flex; align-items: center; gap: 7px; height: 30px; padding: 0 13px; border: none; border-radius: 4px; cursor: pointer; font-family: var(--font-ui); font-size: 13px; font-weight: {{ t.weight }}; color: {{ t.color }}; background: {{ t.bg }}; transition: background 120ms;">
+              <span style="width: 6px; height: 6px; border-radius: 999px; background: {{ t.dot }};"></span>
+              {{ t.short }}
+            </button>
+          </sc-for>
+        </div>
+        <sc-if value="{{ showPublish }}" hint-placeholder-val="{{ false }}">
+          <x-import component-from-global-scope="MediRosterDesignSystem_2b9730.PrimaryButton" onClick="{{ publishAsk }}" hint-size="90px,36px">{{ publishLabel }}</x-import>
+        </sc-if>
+      </div>
+    </header>
+
+    <!-- Revalidation banner -->
+    <sc-if value="{{ revalShow }}" hint-placeholder-val="{{ false }}">
+      <div style="margin: 0 28px 14px 28px; padding: 12px 16px; background: var(--cash-bg); border: 1px solid #ecd9b8; border-radius: 8px;">
+        <div style="display: flex; align-items: center; gap: 10px;">
+          <span style="font-size: 13px; font-weight: 600; color: var(--cash-ink);">Consultant roster re-published — v4 · Pu casualty moved Jun 23 → Jun 25</span>
+          <span style="flex: 1;"></span>
+          <span style="font-family: var(--font-mono); font-size: 11.5px; color: var(--cash-ink);">BUILT AGAINST v3 · 4 DAYS NEED REVIEW</span>
+        </div>
+        <div style="display: flex; flex-direction: column; gap: 5px; margin-top: 10px;">
+          <sc-for list="{{ revalItems }}" as="rv" hint-placeholder-count="4">
+            <div style="display: flex; align-items: center; gap: 9px;">
+              <button data-day="{{ rv.day }}" onClick="{{ jumpIssue }}" style="font-family: var(--font-mono); font-size: 11px; font-weight: 700; color: var(--cash-ink); background: var(--surface); border: 1px solid #ecd9b8; border-radius: 4px; padding: 3px 7px; cursor: pointer;" style-hover="border-color: var(--cash-ink);">JUN {{ rv.dd }}</button>
+              <span style="font-size: 12.5px; color: var(--ink);">{{ rv.text }}</span>
+            </div>
+          </sc-for>
+        </div>
+      </div>
+    </sc-if>
+
+    <!-- Conflict bar -->
+    <sc-if value="{{ hasIssues }}" hint-placeholder-val="{{ false }}">
+      <div style="margin: 0 28px 14px 28px;">
+        <div style="display: flex; align-items: center; gap: 10px; padding: 9px 14px; background: var(--danger-bg); border: 1px solid #f2c8c8; border-radius: 8px;">
+          <span style="font-size: 13px; color: var(--danger); font-weight: 600;">⚠ {{ issuesLabel }}</span>
+          <span style="flex: 1;"></span>
+          <button onClick="{{ toggleDrawer }}" style="border: none; background: none; cursor: pointer; font-family: var(--font-ui); font-size: 12.5px; font-weight: 600; color: var(--danger); text-decoration: underline; text-underline-offset: 3px;">{{ drawerLabel }}</button>
+        </div>
+        <sc-if value="{{ drawerOpen }}" hint-placeholder-val="{{ false }}">
+          <div style="margin-top: 6px; background: var(--surface); border: 1px solid var(--grid-line); border-radius: 8px; box-shadow: var(--shadow-sm); overflow: hidden;">
+            <sc-for list="{{ issues }}" as="i" hint-placeholder-count="2">
+              <div style="display: flex; align-items: center; gap: 10px; padding: 10px 14px; border-bottom: 1px solid var(--grid-line);">
+                <span style="font-family: var(--font-mono); font-size: 10.5px; font-weight: 700; color: {{ i.ink }}; background: {{ i.bg }}; border-radius: 4px; padding: 3px 6px;">{{ i.rule }}</span>
+                <span style="flex: 1; font-size: 13px; color: var(--ink);">{{ i.text }}</span>
+                <button data-day="{{ i.day }}" onClick="{{ jumpIssue }}" style="border: 1px solid var(--grid-line); background: var(--surface); border-radius: 4px; padding: 4px 10px; cursor: pointer; font-family: var(--font-ui); font-size: 12px; font-weight: 600; color: var(--teal-700);" style-hover="background: var(--teal-50);">Jump to day</button>
+              </div>
+            </sc-for>
+          </div>
+        </sc-if>
+      </div>
+    </sc-if>
+
+    <!-- Locked July state -->
+    <sc-if value="{{ lockedShow }}" hint-placeholder-val="{{ false }}">
+      <div style="margin: 0 28px 28px 28px; background: var(--surface); border: 1px solid var(--grid-line); border-radius: 8px; box-shadow: var(--shadow-xs); padding: 72px 32px; text-align: center;">
+        <svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="var(--ink-tertiary)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="margin-bottom: 14px;"><path d="M5 11h14v10H5z"></path><path d="M8 11V7a4 4 0 0 1 8 0v4"></path></svg>
+        <div style="font-family: var(--font-display); font-weight: 600; font-size: 26px; color: var(--ink);">July is locked until the consultant roster is published</div>
+        <div style="max-width: 460px; margin: 10px auto 0 auto; font-size: 14px; line-height: 1.5; color: var(--ink-secondary);">Cash days mirror Prof Unit's casualty days, so this roster waits for Dr. Wasana. Her July draft currently has 2 conflicts.</div>
+        <div style="margin-top: 18px;">
+          <a href="Consultant Roster.dc.html" style="display: inline-flex; align-items: center; height: 34px; padding: 0 16px; border: 1px solid var(--grid-line); border-radius: 6px; background: var(--surface); font-size: 13px; font-weight: 600; color: var(--teal-700); text-decoration: none;" style-hover="background: var(--teal-50);">View consultant roster</a>
+        </div>
+      </div>
+    </sc-if>
+
+    <!-- Content row -->
+    <sc-if value="{{ gridShow }}" hint-placeholder-val="{{ true }}">
+      <div style="display: flex; gap: 18px; padding: 0 28px 28px 28px; align-items: flex-start;">
+        <div style="flex: 1; min-width: 0;">
+
+          <!-- Legend / person spotlight -->
+          <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 12px; flex-wrap: wrap;">
+            <sc-for list="{{ legend }}" as="l" hint-placeholder-count="4">
+              <button data-pen="{{ l.pen }}" onClick="{{ legendClick }}" onMouseEnter="{{ legendEnter }}" onMouseLeave="{{ legendLeave }}" style="display: flex; align-items: center; gap: 9px; padding: 7px 11px 7px 8px; background: var(--surface); border: 1px solid {{ l.border }}; border-radius: 6px; cursor: pointer; font-family: var(--font-ui); box-shadow: var(--shadow-xs); transition: border-color 120ms;">
+                <span style="min-width: 26px; height: 22px; padding: 0 6px; border-radius: 6px; display: inline-flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 600; color: {{ l.ink }}; background: {{ l.bg }};">{{ l.code }}</span>
+                <span style="text-align: left;">
+                  <span style="display: block; font-size: 12px; font-weight: 600; color: var(--ink); line-height: 1.2; white-space: nowrap;">{{ l.name }}</span>
+                  <span style="display: block; font-family: var(--font-mono); font-size: 10.5px; color: var(--ink-secondary); line-height: 1.3; white-space: nowrap;">{{ l.tally }}</span>
+                </span>
+              </button>
+            </sc-for>
+            <span style="flex: 1;"></span>
+            <span style="display: inline-flex; align-items: center; gap: 6px; font-size: 11px; color: var(--ink-secondary);">
+              <span style="display: inline-flex; align-items: center; justify-content: center; height: 17px; padding: 0 6px; font-size: 10px; font-weight: 600; color: var(--cash-ink); background: var(--cash-bg); border-radius: 4px;">◆ CASH</span>
+              <span style="display: inline-flex; align-items: center; justify-content: center; height: 17px; padding: 0 6px; font-size: 10px; font-weight: 600; color: var(--postcash-ink); background: var(--postcash-bg); border-radius: 4px;">■ POST</span>
+              <span>cash follows Pu's days</span>
+            </span>
+          </div>
+
+          <!-- Month grid -->
+          <div style="background: var(--surface); border: 1px solid var(--grid-line); border-radius: 8px; box-shadow: var(--shadow-xs); overflow: hidden;">
+            <div style="display: grid; grid-template-columns: repeat(7, 1fr); border-bottom: 1px solid var(--grid-line);">
+              <div style="padding: 9px 10px; font-size: 11px; font-weight: 600; letter-spacing: 0.04em; color: var(--ink-tertiary); border-right: 1px solid var(--grid-line);">MON</div>
+              <div style="padding: 9px 10px; font-size: 11px; font-weight: 600; letter-spacing: 0.04em; color: var(--ink-tertiary); border-right: 1px solid var(--grid-line);">TUE</div>
+              <div style="padding: 9px 10px; font-size: 11px; font-weight: 600; letter-spacing: 0.04em; color: var(--ink-tertiary); border-right: 1px solid var(--grid-line);">WED</div>
+              <div style="padding: 9px 10px; font-size: 11px; font-weight: 600; letter-spacing: 0.04em; color: var(--ink-tertiary); border-right: 1px solid var(--grid-line);">THU</div>
+              <div style="padding: 9px 10px; font-size: 11px; font-weight: 600; letter-spacing: 0.04em; color: var(--ink-tertiary); border-right: 1px solid var(--grid-line);">FRI</div>
+              <div style="padding: 9px 10px; font-size: 11px; font-weight: 600; letter-spacing: 0.04em; color: var(--ink-secondary); background: var(--weekend-bg); border-right: 1px solid var(--grid-line);">SAT</div>
+              <div style="padding: 9px 10px; font-size: 11px; font-weight: 600; letter-spacing: 0.04em; color: var(--ink-secondary); background: var(--weekend-bg);">SUN</div>
+            </div>
+            <div style="display: grid; grid-template-columns: repeat(7, 1fr);">
+              <sc-for list="{{ cells }}" as="c" hint-placeholder-count="35">
+                <div data-day="{{ c.day }}" onClick="{{ cellClick }}" style="position: relative; display: flex; flex-direction: column; min-height: 102px; padding: 8px; border-right: 1px solid var(--grid-line); border-bottom: 1px solid var(--grid-line); background: {{ c.bg }}; box-shadow: {{ c.ring }}; animation: {{ c.anim }}; cursor: {{ c.cursor }}; transition: background 120ms cubic-bezier(0.2,0,0,1), box-shadow 120ms;">
+                  <sc-if value="{{ c.real }}" hint-placeholder-val="{{ true }}">
+                    <div style="display: flex; align-items: center; justify-content: space-between;">
+                      <span style="font-family: var(--font-mono); font-size: 12px; font-weight: {{ c.ddWeight }}; color: {{ c.ddColor }};">{{ c.dd }}</span>
+                      <span style="display: inline-flex; align-items: center; gap: 4px;">
+                        <sc-if value="{{ c.puShow }}" hint-placeholder-val="{{ false }}">
+                          <span title="Prof Unit on consultant casualty" style="font-family: var(--font-mono); font-size: 9.5px; font-weight: 600; color: var(--pen-Pu-ink); background: var(--pen-Pu-bg); border-radius: 4px; padding: 2px 5px;">Pu</span>
+                        </sc-if>
+                        <sc-if value="{{ c.tagShow }}" hint-placeholder-val="{{ false }}">
+                          <span style="font-size: 9px; font-weight: 700; letter-spacing: 0.05em; color: {{ c.tagColor }}; background: {{ c.tagBg }}; border-radius: 4px; padding: 2px 5px;">{{ c.tagText }}</span>
+                        </sc-if>
+                      </span>
+                    </div>
+                    <sc-if value="{{ c.hasChip }}" hint-placeholder-val="{{ true }}">
+                      <div style="flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; opacity: {{ c.chipOpacity }}; transition: opacity 180ms cubic-bezier(0.2,0,0,1);">
+                        <span data-day="{{ c.day }}" onPointerDown="{{ chipDown }}" style="display: inline-flex; align-items: center; justify-content: center; min-width: 36px; height: 30px; padding: 0 11px; font-weight: 600; font-size: 15px; line-height: 1; color: {{ c.ink }}; background: {{ c.chipBg }}; border-radius: 6px; cursor: {{ c.chipCursor }}; user-select: none; touch-action: none; box-shadow: {{ c.chipRing }};">{{ c.code }}</span>
+                        <span style="font-size: 10.5px; color: var(--ink-secondary); white-space: nowrap; overflow: hidden; max-width: 100%; text-overflow: ellipsis;">{{ c.shortName }}</span>
+                        <sc-if value="{{ c.secondShow }}" hint-placeholder-val="{{ false }}">
+                          <span style="display: inline-flex; align-items: center; height: 18px; padding: 0 7px; font-size: 10px; font-weight: 600; color: {{ c.secondInk }}; background: var(--surface); border: 1px dashed {{ c.secondDot }}; border-radius: 6px;">2nd · {{ c.secondCode }}</span>
+                        </sc-if>
+                      </div>
+                    </sc-if>
+                    <sc-if value="{{ c.pillShow }}" hint-placeholder-val="{{ false }}">
+                      <div data-day="{{ c.day }}" onPointerDown="{{ chipDown }}" style="position: absolute; left: 9px; top: 38px; width: calc(200% - 19px); z-index: 3; display: flex; align-items: center; gap: 8px; padding: 8px 11px; border-radius: 6px; color: {{ c.pillInk }}; background: {{ c.pillBg }}; cursor: {{ c.chipCursor }}; user-select: none; touch-action: none; box-shadow: {{ c.pillRing }}; opacity: {{ c.chipOpacity }}; transition: opacity 180ms;">
+                        <span style="font-weight: 600; font-size: 15px;">{{ c.pillCode }}</span>
+                        <span style="font-size: 11.5px; font-weight: 500; flex: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{ c.pillName }} · weekend</span>
+                        <span style="font-family: var(--font-mono); font-size: 10px; letter-spacing: 0.04em;">2 OC</span>
+                      </div>
+                    </sc-if>
+                    <sc-if value="{{ c.flagsShow }}" hint-placeholder-val="{{ false }}">
+                      <div style="display: flex; gap: 4px; align-items: center; min-height: 18px; flex-wrap: wrap;">
+                        <sc-if value="{{ c.cash }}" hint-placeholder-val="{{ false }}">
+                          <span style="display: inline-flex; align-items: center; height: 18px; padding: 0 6px; font-size: 10px; font-weight: 600; color: var(--cash-ink); background: var(--cash-bg); border-radius: 4px;">◆ {{ c.cashLabel }}</span>
+                        </sc-if>
+                        <sc-if value="{{ c.postCash }}" hint-placeholder-val="{{ false }}">
+                          <span style="display: inline-flex; align-items: center; height: 18px; padding: 0 6px; font-size: 10px; font-weight: 600; color: var(--postcash-ink); background: var(--postcash-bg); border-radius: 4px;">■ POST</span>
+                        </sc-if>
+                        <sc-if value="{{ c.conflictBadge }}" hint-placeholder-val="{{ false }}">
+                          <span style="display: inline-flex; align-items: center; justify-content: center; height: 18px; min-width: 18px; font-size: 10px; font-weight: 600; color: var(--danger); background: var(--danger-bg); border-radius: 4px;">⚠</span>
+                        </sc-if>
+                        <sc-if value="{{ c.reviewBadge }}" hint-placeholder-val="{{ false }}">
+                          <span style="display: inline-flex; align-items: center; height: 18px; padding: 0 6px; font-size: 10px; font-weight: 600; color: var(--cash-ink); background: var(--surface); border: 1px dashed var(--cash-ink); border-radius: 4px;">REVIEW</span>
+                        </sc-if>
+                      </div>
+                    </sc-if>
+                  </sc-if>
+                </div>
+              </sc-for>
+            </div>
+          </div>
+        </div>
+
+        <!-- Fairness panel -->
+        <aside style="width: 292px; flex-shrink: 0; display: flex; flex-direction: column; gap: 14px;">
+          <div style="background: var(--surface); border: 1px solid var(--grid-line); border-radius: 8px; box-shadow: var(--shadow-xs); padding: 16px;">
+            <div style="display: flex; align-items: baseline; justify-content: space-between;">
+              <span style="font-size: 15px; font-weight: 600;">Fairness</span>
+              <span style="font-family: var(--font-mono); font-size: 11px; color: var(--ink-secondary);">{{ fairMonthLabel }}</span>
+            </div>
+            <div style="display: flex; gap: 7px; justify-content: flex-end; margin-top: 12px; padding-bottom: 5px; border-bottom: 1px solid var(--grid-line); font-size: 10px; font-weight: 600; letter-spacing: 0.04em; color: var(--ink-tertiary);">
+              <span style="width: 24px; text-align: right;">OC</span>
+              <span style="width: 24px; text-align: right;">◆</span>
+              <span style="width: 24px; text-align: right;">■</span>
+              <span style="width: 28px; text-align: right;">WKD</span>
+            </div>
+            <sc-for list="{{ fairRows }}" as="f" hint-placeholder-count="4">
+              <div style="display: flex; align-items: center; gap: 9px; padding: 9px 0; border-bottom: 1px solid var(--grid-line);">
+                <span style="width: 9px; height: 9px; border-radius: 999px; background: {{ f.dot }}; flex-shrink: 0;"></span>
+                <div style="flex: 1; min-width: 0;">
+                  <div style="font-size: 12.5px; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{ f.name }}</div>
+                  <div style="height: 4px; background: var(--bar-track); border-radius: 2px; margin-top: 5px; overflow: hidden;">
+                    <div style="width: {{ f.pct }}; height: 100%; background: {{ f.barColor }}; border-radius: 2px; transition: width 240ms cubic-bezier(0.2,0,0,1), background 240ms;"></div>
+                  </div>
+                </div>
+                <span style="font-family: var(--font-mono); font-size: 12.5px; width: 24px; text-align: right;">{{ f.oc }}</span>
+                <span style="font-family: var(--font-mono); font-size: 12.5px; width: 24px; text-align: right; color: var(--cash-ink);">{{ f.cash }}</span>
+                <span style="font-family: var(--font-mono); font-size: 12.5px; width: 24px; text-align: right; color: var(--postcash-ink);">{{ f.pc }}</span>
+                <span style="font-family: var(--font-mono); font-size: 12.5px; width: 28px; text-align: right; color: var(--ink-secondary);">{{ f.wkd }}</span>
+              </div>
+            </sc-for>
+            <div style="margin-top: 9px; font-size: 11px; line-height: 1.5; color: var(--ink-secondary);">Cash and post-cash inversely compensate — Mekala carries 1 ◆ but 2 ■, Sulakshana 2 ◆ but 1 ■.</div>
+          </div>
+
+          <div style="background: var(--surface); border: 1px solid var(--grid-line); border-radius: 8px; box-shadow: var(--shadow-xs); padding: 16px;">
+            <div style="font-size: 10.5px; font-weight: 600; letter-spacing: 0.04em; color: var(--ink-tertiary);">NON-CASH WEEKEND ROTATION</div>
+            <div style="display: flex; align-items: center; gap: 6px; margin-top: 10px;">
+              <sc-for list="{{ rotation }}" as="ro" hint-placeholder-count="4">
+                <span style="display: inline-flex; align-items: center; justify-content: center; min-width: 26px; height: 24px; padding: 0 7px; border-radius: 6px; font-size: 12px; font-weight: 600; color: {{ ro.ink }}; background: {{ ro.bg }}; box-shadow: {{ ro.ring }};">{{ ro.code }}</span>
+                <sc-if value="{{ ro.arrow }}" hint-placeholder-val="{{ true }}">
+                  <span style="color: var(--ink-tertiary); font-size: 11px;">→</span>
+                </sc-if>
+              </sc-for>
+            </div>
+            <div style="margin-top: 10px; font-family: var(--font-mono); font-size: 11px; line-height: 1.6; color: var(--ink-secondary);">May ended at R(uwanda)<br>Jun: M 6–7 → S 13–14 → U 20–21</div>
+            <div style="margin-top: 8px; font-size: 11px; line-height: 1.5; color: var(--ink-secondary);">Carried across months. The cash weekend (27–28) splits between two people instead.</div>
+          </div>
+        </aside>
+      </div>
+    </sc-if>
+  </main>
+
+  <!-- Day popover -->
+  <sc-if value="{{ popShow }}" hint-placeholder-val="{{ false }}">
+    <div onClick="{{ popClose }}" style="position: fixed; inset: 0; z-index: 50;"></div>
+    <div style="position: fixed; left: {{ popX }}px; top: {{ popY }}px; z-index: 51; width: 274px; background: var(--surface); border: 1px solid var(--grid-line); border-radius: 8px; box-shadow: var(--shadow-lift); padding: 14px;">
+      <div style="font-family: var(--font-mono); font-size: 11px; color: var(--ink-secondary);">{{ popDate }}</div>
+      <div style="display: flex; align-items: center; gap: 9px; margin-top: 8px;">
+        <span style="min-width: 32px; height: 28px; padding: 0 9px; border-radius: 6px; display: inline-flex; align-items: center; justify-content: center; font-size: 14px; font-weight: 600; color: {{ popInk }}; background: {{ popBg }};">{{ popCode }}</span>
+        <div>
+          <div style="font-size: 14px; font-weight: 600;">{{ popName }}</div>
+          <div style="font-family: var(--font-mono); font-size: 11px; color: var(--ink-secondary);">{{ popShift }}</div>
+        </div>
+      </div>
+      <sc-if value="{{ popFlagsShow }}" hint-placeholder-val="{{ false }}">
+        <div style="margin-top: 9px; font-size: 12px; line-height: 1.5; color: var(--ink-secondary);">{{ popFlagsText }}</div>
+      </sc-if>
+      <sc-if value="{{ popSecondShow }}" hint-placeholder-val="{{ false }}">
+        <div style="display: flex; align-items: center; gap: 7px; margin-top: 9px; padding: 8px 10px; background: var(--surface-sunken); border-radius: 6px;">
+          <span style="font-size: 11px; font-weight: 600; color: var(--ink-secondary);">2ND ON-CALL · TRANSFER</span>
+          <span style="flex: 1;"></span>
+          <span style="min-width: 24px; height: 20px; padding: 0 6px; border-radius: 6px; display: inline-flex; align-items: center; justify-content: center; font-size: 11.5px; font-weight: 600; color: {{ popSecondInk }}; background: {{ popSecondBg }};">{{ popSecondCode }}</span>
+        </div>
+      </sc-if>
+      <sc-if value="{{ popConflict }}" hint-placeholder-val="{{ false }}">
+        <div style="margin-top: 10px; padding: 8px 10px; background: var(--danger-bg); border-radius: 6px; font-size: 12px; line-height: 1.45; color: var(--danger);">{{ popConflictText }}</div>
+      </sc-if>
+      <sc-if value="{{ popReview }}" hint-placeholder-val="{{ false }}">
+        <div style="margin-top: 10px; padding: 8px 10px; background: var(--cash-bg); border-radius: 6px; font-size: 12px; line-height: 1.45; color: var(--cash-ink);">{{ popReviewText }}</div>
+      </sc-if>
+      <sc-if value="{{ popCanSwap }}" hint-placeholder-val="{{ false }}">
+        <div style="margin-top: 12px; padding-top: 10px; border-top: 1px solid var(--grid-line);">
+          <div style="font-size: 10.5px; font-weight: 600; letter-spacing: 0.04em; color: var(--ink-tertiary); margin-bottom: 7px;">REASSIGN TO</div>
+          <div style="display: flex; gap: 6px;">
+            <sc-for list="{{ popSwaps }}" as="s" hint-placeholder-count="3">
+              <button data-pen="{{ s.pen }}" onClick="{{ popAssign }}" style="flex: 1; display: inline-flex; align-items: center; justify-content: center; height: 30px; border: 1px solid var(--grid-line); border-radius: 6px; background: {{ s.bg }}; color: {{ s.ink }}; font-family: var(--font-ui); font-size: 13px; font-weight: 600; cursor: pointer;" style-hover="border-color: var(--teal-600);">{{ s.code }}</button>
+            </sc-for>
+          </div>
+        </div>
+      </sc-if>
+    </div>
+  </sc-if>
+
+  <!-- Publish confirm -->
+  <sc-if value="{{ confirmShow }}" hint-placeholder-val="{{ false }}">
+    <div onClick="{{ confirmCancel }}" style="position: fixed; inset: 0; z-index: 60; background: rgba(27,39,51,0.18);"></div>
+    <div style="position: fixed; left: 50%; top: 38%; transform: translate(-50%, -50%); z-index: 61; width: 380px; background: var(--surface); border: 1px solid var(--grid-line); border-radius: 8px; box-shadow: var(--shadow-lift); padding: 20px;">
+      <div style="font-family: var(--font-display); font-weight: 600; font-size: 20px;">Re-publish June 2026?</div>
+      <div style="margin-top: 8px; font-size: 13.5px; line-height: 1.5; color: var(--ink-secondary);">v2 → v3 · Locks this version and writes the audit trail. The WhatsApp group sees the new version when you share it.</div>
+      <sc-if value="{{ confirmWarnShow }}" hint-placeholder-val="{{ false }}">
+        <div style="margin-top: 10px; padding: 9px 11px; background: var(--cash-bg); border-radius: 6px; font-size: 12.5px; line-height: 1.45; color: var(--cash-ink);">{{ confirmWarn }}</div>
+      </sc-if>
+      <div style="display: flex; justify-content: flex-end; gap: 8px; margin-top: 18px;">
+        <button onClick="{{ confirmCancel }}" style="height: 34px; padding: 0 14px; border: 1px solid var(--grid-line); border-radius: 6px; background: var(--surface); font-family: var(--font-ui); font-size: 13px; font-weight: 600; color: var(--ink); cursor: pointer;" style-hover="background: var(--surface-sunken);">Cancel</button>
+        <button onClick="{{ confirmGo }}" style="height: 34px; padding: 0 16px; border: none; border-radius: 6px; background: var(--teal-600); font-family: var(--font-ui); font-size: 13px; font-weight: 600; color: #ffffff; cursor: pointer;" style-hover="background: var(--teal-700);">Re-publish</button>
+      </div>
+    </div>
+  </sc-if>
+
+  <!-- Toast -->
+  <sc-if value="{{ toastShow }}" hint-placeholder-val="{{ false }}">
+    <div style="position: fixed; left: 50%; bottom: 26px; transform: translateX(-50%); z-index: 70; background: var(--ink); color: #ffffff; font-size: 13px; font-weight: 500; padding: 10px 16px; border-radius: 6px; box-shadow: var(--shadow-lift); white-space: nowrap;">{{ toastText }}</div>
+  </sc-if>
+
+  <!-- Drag ghost -->
+  <sc-if value="{{ dragShow }}" hint-placeholder-val="{{ false }}">
+    <div ref="{{ ghostRef }}" style="position: fixed; left: 0; top: 0; z-index: 90; pointer-events: none; will-change: transform;">
+      <span style="display: inline-flex; align-items: center; justify-content: center; min-width: 36px; height: 30px; padding: 0 11px; font-family: var(--font-ui); font-weight: 600; font-size: 15px; color: {{ dragInk }}; background: {{ dragBg }}; border-radius: 6px; box-shadow: var(--shadow-lift), 0 0 0 2px {{ dragRing }}; transform: scale(1.05);">{{ dragCode }}</span>
+    </div>
+  </sc-if>
+</div>
+
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+class Component extends DCLogic {
+  state = {
+    ready: false,
+    month: "2026-06",
+    role: "E2",
+    roster: null,
+    scenario: false,
+    drawerOpen: false,
+    hoverPen: null,
+    pinnedPen: null,
+    popover: null,
+    confirmOpen: false,
+    toast: null,
+    drag: null,
+    pulseDay: null,
+    shakeDay: null,
+  };
+
+  ghostRef = React.createRef();
+
+  async componentDidMount() {
+    const M = await import("./data/mura-data.js");
+    this._M = M;
+    const roster = JSON.parse(JSON.stringify(M.SHO_ROSTERS["2026-06"]));
+    this.setState({ ready: true, roster, role: M.getRole() });
+    this._onMove = (e) => this.dragMove(e);
+    this._onUp = (e) => this.dragUp(e);
+    window.addEventListener("pointermove", this._onMove);
+    window.addEventListener("pointerup", this._onUp);
+  }
+
+  componentWillUnmount() {
+    window.removeEventListener("pointermove", this._onMove);
+    window.removeEventListener("pointerup", this._onUp);
+  }
+
+  canEdit() { return this.state.role === "E2" || this.state.role === "ADMIN"; }
+
+  puDays() {
+    const base = [3, 8, 11, 19, 23, 27, 28];
+    if (!this.state.scenario) return base;
+    return [3, 8, 11, 19, 25, 27, 28];
+  }
+
+  ncwStart(day) {
+    const a = this.state.roster.assignments;
+    const M = this._M;
+    return a[day] && a[day].ncw && M.dowOf("2026-06", day) === 5;
+  }
+
+  showToast(text) {
+    clearTimeout(this._toastT);
+    this.setState({ toast: text });
+    this._toastT = setTimeout(() => this.setState({ toast: null }), 3200);
+  }
+
+  markEdited() {
+    const r = this.state.roster;
+    if (r.status === "published" && !r.dirty) { r.dirty = true; this.showToast("Editing a published roster — re-publish to share the change"); }
+  }
+
+  /* ---------- drag ---------- */
+  chipDown = (e) => {
+    if (!this.canEdit() || this.state.month !== "2026-06") return;
+    const day = parseInt(e.currentTarget.getAttribute("data-day"), 10);
+    if (!day) return;
+    e.preventDefault(); e.stopPropagation();
+    this._dragStart = { day, x: e.clientX, y: e.clientY, started: false };
+  };
+
+  dragMove(e) {
+    const ds = this._dragStart;
+    if (!ds) return;
+    if (!ds.started) {
+      if (Math.abs(e.clientX - ds.x) + Math.abs(e.clientY - ds.y) < 6) return;
+      ds.started = true;
+      document.body.style.userSelect = "none";
+      this.setState({ drag: { from: ds.day, over: null, valid: false }, popover: null });
+    }
+    if (this.ghostRef.current) {
+      this.ghostRef.current.style.transform = "translate(" + (e.clientX + 10) + "px," + (e.clientY - 34) + "px)";
+    }
+    const el = document.elementFromPoint(e.clientX, e.clientY);
+    const cell = el && el.closest ? el.closest("[data-day]") : null;
+    const over = cell ? parseInt(cell.getAttribute("data-day"), 10) || null : null;
+    const d = this.state.drag;
+    if (d && d.over !== over) {
+      this.setState({ drag: { from: d.from, over, valid: this.swapValid(d.from, over) } });
+    }
+  }
+
+  swapValid(from, to) {
+    if (!to || to === from) return false;
+    const a = this.state.roster.assignments;
+    if (!a[from] || !a[to]) return false;
+    const fN = this.ncwStart(from) || (a[from].ncw && !this.ncwStart(from));
+    const fStart = this.ncwStart(from), tStart = this.ncwStart(to);
+    const fNcw = a[from].ncw, tNcw = a[to].ncw;
+    if (fNcw && tNcw) return fStart && tStart && from !== to; /* block ⇄ block via Sat pills */
+    if (fNcw || tNcw) return false;
+    return a[from].who !== a[to].who;
+  }
+
+  dragUp(e) {
+    const ds = this._dragStart;
+    this._dragStart = null;
+    document.body.style.userSelect = "";
+    if (!ds) return;
+    if (!ds.started) { this.openPopover(ds.day, e); return; }
+    const d = this.state.drag;
+    this.setState({ drag: null });
+    if (!d || !d.over) return;
+    if (!d.valid) {
+      this.setState({ shakeDay: d.over });
+      setTimeout(() => this.setState({ shakeDay: null }), 450);
+      return;
+    }
+    this.doSwap(d.from, d.over);
+  }
+
+  doSwap(from, to) {
+    const a = this.state.roster.assignments;
+    const M = this._M;
+    if (a[from].ncw && a[to].ncw) {
+      /* swap weekend owners: both days of each block */
+      const w1 = a[from].who, w2 = a[to].who;
+      a[from].who = w2; a[from + 1].who = w2;
+      a[to].who = w1; a[to + 1].who = w1;
+      this.showToast("Weekend blocks swapped — " + M.PEOPLE[w2].short + " ⇄ " + M.PEOPLE[w1].short);
+    } else {
+      const w = a[from].who;
+      a[from].who = a[to].who;
+      a[to].who = w;
+      this.showToast("Jun " + from + " ⇄ " + to + " — flags stay with the day, tallies updated");
+    }
+    this.markEdited();
+    this.forceUpdate();
+  }
+
+  /* ---------- popover ---------- */
+  openPopover(day, e) {
+    const cell = document.querySelector('div[data-day="' + day + '"]');
+    const rc = cell ? cell.getBoundingClientRect() : { left: e.clientX, bottom: e.clientY, top: e.clientY };
+    const x = Math.min(Math.max(8, rc.left), window.innerWidth - 290);
+    const y = rc.bottom + 300 > window.innerHeight ? rc.top - 280 : rc.bottom + 6;
+    this.setState({ popover: { day, x, y: Math.max(8, y) } });
+  }
+  cellClick = (e) => {
+    const day = parseInt(e.currentTarget.getAttribute("data-day"), 10);
+    if (day && !this.state.drag && this.state.month === "2026-06") this.openPopover(day, e);
+  };
+  popClose = () => this.setState({ popover: null });
+  popAssign = (e) => {
+    const pen = e.currentTarget.getAttribute("data-pen");
+    const day = this.state.popover.day;
+    this.state.roster.assignments[day].who = pen;
+    this.markEdited();
+    this.setState({ popover: null });
+    this.showToast(this._M.PEOPLE[pen].short + " takes Jun " + String(day).padStart(2, "0") + " on-call");
+  };
+
+  /* ---------- actions ---------- */
+  switchRole = (e) => {
+    const r = e.currentTarget.getAttribute("data-role");
+    this._M.setRole(r);
+    this.setState({ role: r, popover: null });
+  };
+  monthTabClick = (e) => this.setState({ month: e.currentTarget.getAttribute("data-key"), popover: null, drawerOpen: false });
+  scenarioToggle = () => {
+    const on = !this.state.scenario;
+    this.setState({ scenario: on, drawerOpen: false });
+    this.showToast(on ? "Demo — Wasana re-published June v4: Pu casualty moved 23 → 25" : "Demo reset — roster matches consultant v3 again");
+  };
+  toggleDrawer = () => this.setState({ drawerOpen: !this.state.drawerOpen });
+  jumpIssue = (e) => {
+    const day = parseInt(e.currentTarget.getAttribute("data-day"), 10);
+    this.setState({ pulseDay: day, drawerOpen: false });
+    setTimeout(() => this.setState({ pulseDay: null }), 1100);
+  };
+  legendEnter = (e) => this.setState({ hoverPen: e.currentTarget.getAttribute("data-pen") });
+  legendLeave = () => this.setState({ hoverPen: null });
+  legendClick = (e) => {
+    const p = e.currentTarget.getAttribute("data-pen");
+    this.setState({ pinnedPen: this.state.pinnedPen === p ? null : p });
+  };
+  publishAsk = () => this.setState({ confirmOpen: true });
+  confirmCancel = () => this.setState({ confirmOpen: false });
+  confirmGo = () => {
+    const r = this.state.roster;
+    r.version = r.version + 1;
+    r.status = "published";
+    r.dirty = false;
+    if (this.state.scenario) r.builtAgainstVersion = 4;
+    this.setState({ confirmOpen: false, scenario: this.state.scenario });
+    this.showToast("June SHO/RHO roster re-published — v" + r.version);
+  };
+
+  /* ---------- render ---------- */
+  renderVals() {
+    const st = this.state;
+    if (!st.ready) return {};
+    const M = this._M;
+    const mk = "2026-06";
+    const m = M.MONTHS[mk];
+    const r = st.roster;
+    const a = r.assignments;
+    const canEdit = this.canEdit();
+    const isJuly = st.month === "2026-07";
+    const puDays = this.puDays();
+
+    const issues = M.validateSho(mk, a, puDays);
+    const errs = issues.filter((i) => i.severity === "error");
+    const byDay = {};
+    issues.forEach((i) => { (byDay[i.day] = byDay[i.day] || []).push(i); });
+
+    const tallies = M.shoTallies(a);
+    const totalOC = M.SHOS.reduce((s, k) => s + tallies[k].onCall, 0);
+    const avg = totalOC / 4 || 1;
+
+    const filterPen = st.pinnedPen || st.hoverPen;
+    const drag = st.drag;
+    const reval = st.scenario ? M.REVALIDATION_SCENARIO : null;
+
+    const cells = M.buildCells(mk).map((day, idx) => {
+      if (!day) return { key: "b" + idx, blank: true, real: false, bg: "var(--surface-sunken)", ring: "none", anim: "none", cursor: "default", day: "" };
+      const asg = a[day];
+      const pen = asg && asg.who;
+      const p = pen ? M.PEOPLE[pen] : null;
+      const wk = M.isWeekend(mk, day);
+      const hol = m.holidays[day];
+      const today = day === 12;
+      const isNcwStart = asg && asg.ncw && M.dowOf(mk, day) === 5;
+      const isNcwSun = asg && asg.ncw && M.dowOf(mk, day) === 6;
+      const dayErrs = (byDay[day] || []).filter((i) => i.severity === "error");
+      const conflict = dayErrs.length > 0;
+      const review = reval && reval.affected[day] && !conflict;
+
+      let bg = hol ? "var(--holiday-bg)" : wk ? "var(--weekend-bg)" : "var(--surface)";
+      let ring = "none";
+      if (today) ring = "inset 0 0 0 2px var(--teal-600)";
+      if (review) ring = "inset 0 0 0 2px #ecd9b8";
+      if (drag && drag.over === day && drag.from !== day) {
+        bg = drag.valid ? "var(--teal-50)" : "var(--danger-bg)";
+        ring = "inset 0 0 0 2px " + (drag.valid ? "var(--teal-ring)" : "var(--danger-ring)");
+      }
+      let anim = "none";
+      if (st.pulseDay === day) anim = "mrPulse 1s cubic-bezier(0.2,0,0,1) both";
+      if (st.shakeDay === day) anim = "mrShake 400ms cubic-bezier(0.2,0,0,1)";
+
+      const dimmed = filterPen && (!pen || pen !== filterPen);
+      const dragSrc = drag && drag.from === day;
+
+      let tagShow = false, tagText = "", tagColor = "", tagBg = "transparent";
+      if (today) { tagShow = true; tagText = "TODAY"; tagColor = "var(--teal-700)"; tagBg = "var(--teal-50)"; }
+      else if (hol) { tagShow = true; tagText = "PH"; tagColor = "var(--danger)"; tagBg = "transparent"; }
+      else if (asg && asg.cwd) { tagShow = true; tagText = "CASH WKD"; tagColor = "var(--cash-ink)"; tagBg = "var(--cash-bg)"; }
+
+      const second = asg && asg.second;
+
+      return {
+        key: "d" + day, blank: false, real: true, day,
+        dd: String(day).padStart(2, "0"),
+        ddWeight: today ? 700 : 400,
+        ddColor: today ? "var(--teal-700)" : "var(--ink-tertiary)",
+        tagShow, tagText, tagColor, tagBg,
+        puShow: puDays.indexOf(day) >= 0,
+        bg, ring, anim,
+        cursor: "pointer",
+        hasChip: !!pen && !asg.ncw,
+        code: p ? p.code : "",
+        shortName: p ? p.short : "",
+        ink: p ? "var(--pen-" + pen + "-ink)" : "",
+        chipBg: p ? "var(--pen-" + pen + "-bg)" : "",
+        chipRing: conflict ? "0 0 0 2px var(--danger-ring)" : "0 1px 1px rgba(27,39,51,0.05)",
+        chipOpacity: dimmed ? 0.18 : dragSrc ? 0.35 : 1,
+        chipCursor: canEdit ? "grab" : "default",
+        secondShow: !!second,
+        secondCode: second ? M.PEOPLE[second].code : "",
+        secondInk: second ? "var(--pen-" + second + "-ink)" : "",
+        secondDot: second ? "var(--pen-" + second + "-dot)" : "",
+        pillShow: !!isNcwStart,
+        pillCode: isNcwStart && p ? p.code : "",
+        pillName: isNcwStart && p ? p.short : "",
+        pillInk: isNcwStart && pen ? "var(--pen-" + pen + "-ink)" : "",
+        pillBg: isNcwStart && pen ? "var(--pen-" + pen + "-bg)" : "",
+        pillRing: isNcwStart && conflict ? "0 0 0 2px var(--danger-ring)" : "var(--shadow-xs)",
+        flagsShow: !!(asg && (asg.cash || asg.postCash)) || conflict || review,
+        cash: !!(asg && asg.cash),
+        cashLabel: asg && asg.cwd ? asg.cwd.toUpperCase() : "CASH",
+        postCash: !!(asg && asg.postCash),
+        conflictBadge: conflict,
+        reviewBadge: !!review,
+      };
+    });
+
+    const legend = M.SHOS.map((k) => {
+      const p = M.PEOPLE[k];
+      const t = tallies[k];
+      return {
+        pen: k, code: p.code,
+        name: p.short + " · " + p.role,
+        ink: "var(--pen-" + k + "-ink)", bg: "var(--pen-" + k + "-bg)",
+        tally: String(t.onCall).padStart(2, "0") + " oc · " + t.cash + "◆ · " + t.postCash + "■",
+        border: st.pinnedPen === k ? "var(--teal-600)" : "var(--grid-line)",
+      };
+    });
+
+    const fairRows = M.SHOS.map((k) => {
+      const p = M.PEOPLE[k];
+      const t = tallies[k];
+      const ratio = avg > 0 ? t.onCall / avg : 1;
+      const delta = Math.abs(ratio - 1);
+      return {
+        dot: "var(--pen-" + k + "-dot)",
+        name: p.short,
+        oc: String(t.onCall).padStart(2, "0"),
+        cash: String(t.cash).padStart(2, "0"),
+        pc: String(t.postCash).padStart(2, "0"),
+        wkd: String(t.weekend).padStart(2, "0"),
+        pct: Math.max(6, Math.min(100, ratio * 60)) + "%",
+        barColor: delta > 0.12 ? (ratio > 1 ? "var(--bar-over)" : "var(--bar-under)") : "var(--bar-balanced)",
+      };
+    });
+
+    const rotation = ["Rt", "M", "S", "U"].map((k, i) => ({
+      code: M.PEOPLE[k].code,
+      ink: "var(--pen-" + k + "-ink)",
+      bg: "var(--pen-" + k + "-bg)",
+      ring: k === "M" ? "0 0 0 2px var(--teal-ring)" : "none",
+      arrow: i < 3,
+    }));
+
+    const monthTabs = [
+      { key: "2026-06", short: "Jun", dot: "var(--published-ink)" },
+      { key: "2026-07", short: "Jul", dot: "var(--grid-line-strong)" },
+    ].map((t) => ({
+      ...t,
+      weight: st.month === t.key ? 600 : 500,
+      color: st.month === t.key ? "var(--ink)" : "var(--ink-secondary)",
+      bg: st.month === t.key ? "var(--teal-50)" : "transparent",
+    }));
+
+    const nav = M.NAV.filter((n) => n.roles.indexOf(st.role) >= 0).map((n) => ({
+      ...n,
+      weight: n.id === "sho" ? 600 : 500,
+      color: n.id === "sho" ? "var(--teal-700)" : "var(--ink-secondary)",
+      bg: n.id === "sho" ? "var(--teal-50)" : "transparent",
+    }));
+    const roleDots = { ADMIN: ["var(--surface-sunken)", "var(--ink-secondary)"], E1: ["var(--pen-G-bg)", "var(--pen-G-ink)"], E2: ["var(--pen-Rt-bg)", "var(--pen-Rt-ink)"] };
+    const roles = ["ADMIN", "E1", "E2"].map((k) => ({
+      key: k, label: M.ROLES[k].label, caption: M.ROLES[k].caption,
+      initial: M.ROLES[k].label.replace("Dr. ", "").slice(0, 1),
+      dotBg: roleDots[k][0], dotInk: roleDots[k][1],
+      border: st.role === k ? "var(--teal-600)" : "var(--grid-line)",
+      bg: st.role === k ? "var(--teal-50)" : "var(--surface)",
+      check: st.role === k ? "✓" : "",
+    }));
+
+    let metaLine = "30 days · cash locked to Pu: " + puDays.join(", ");
+    if (!isJuly) {
+      metaLine += " · published " + r.publishedAt + " · v" + r.version + " · built against consultant v" + r.builtAgainstVersion;
+    } else {
+      metaLine = "31 days · waiting for the July consultant roster";
+    }
+
+    const pop = st.popover;
+    let popVals = { popShow: false };
+    if (pop && !isJuly) {
+      const asg = a[pop.day];
+      const pen = asg && asg.who;
+      const p = pen ? M.PEOPLE[pen] : null;
+      const dows = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
+      const dayIssues = byDay[pop.day] || [];
+      const flags = [];
+      if (asg && asg.cash) flags.push("◆ Cash day — Pu is on consultant casualty; same 32 h shift.");
+      if (asg && asg.postCash) flags.push("■ Post-cash — stays 8 am – 4 pm, hands over, may leave early with consultant's permission.");
+      if (asg && asg.ncw) flags.push("Non-cash weekend — one person covers Sat + Sun, counted as 2 on-calls.");
+      if (asg && asg.note) flags.push(asg.note + ".");
+      const second = asg && asg.second;
+      popVals = {
+        popShow: true, popX: pop.x, popY: pop.y,
+        popDate: dows[M.dowOf(mk, pop.day)] + " · Jun " + String(pop.day).padStart(2, "0") + ", 2026",
+        popCode: p ? p.code : "—",
+        popName: p ? p.name + " · " + p.role : "Unassigned",
+        popInk: pen ? "var(--pen-" + pen + "-ink)" : "var(--ink-secondary)",
+        popBg: pen ? "var(--pen-" + pen + "-bg)" : "var(--surface-sunken)",
+        popShift: "On-call · 8:00 am → next day 4:00 pm · 32 h",
+        popFlagsShow: flags.length > 0,
+        popFlagsText: flags.join(" "),
+        popSecondShow: !!second,
+        popSecondCode: second ? M.PEOPLE[second].code : "",
+        popSecondInk: second ? "var(--pen-" + second + "-ink)" : "",
+        popSecondBg: second ? "var(--pen-" + second + "-bg)" : "",
+        popConflict: dayIssues.length > 0,
+        popConflictText: dayIssues.map((i) => i.text).join(" · "),
+        popReview: !!(reval && reval.affected[pop.day] && dayIssues.length === 0),
+        popReviewText: reval && reval.affected[pop.day] ? reval.affected[pop.day] : "",
+        popCanSwap: canEdit && !(asg && asg.ncw),
+        popSwaps: M.SHOS.filter((k) => k !== pen).map((k) => ({
+          pen: k, code: M.PEOPLE[k].code,
+          ink: "var(--pen-" + k + "-ink)", bg: "var(--pen-" + k + "-bg)",
+        })),
+      };
+    }
+
+    const dragPen = drag ? a[drag.from].who : null;
+
+    return {
+      nav, roles, switchRole: this.switchRole,
+      monthTabs, monthTabClick: this.monthTabClick,
+      monthName: isJuly ? "July 2026" : "June 2026",
+      metaLine,
+      showStatus: !isJuly,
+      statusKey: "published",
+      statusVersion: r.version,
+      edited: !!r.dirty && !isJuly,
+      readOnly: !canEdit,
+      scenarioLabel: st.scenario ? "Reset demo state" : "Demo: consultant re-publish",
+      scenarioToggle: this.scenarioToggle,
+      showPublish: canEdit && !isJuly && !!r.dirty,
+      publishLabel: "Re-publish",
+      publishAsk: this.publishAsk,
+      revalShow: st.scenario && !isJuly,
+      revalItems: reval ? Object.keys(reval.affected).map((d) => ({ day: parseInt(d, 10), dd: String(d).padStart(2, "0"), text: reval.affected[d] })) : [],
+      hasIssues: !isJuly && issues.length > 0,
+      issuesLabel: errs.length + " conflict" + (errs.length === 1 ? "" : "s") + " on this roster",
+      drawerOpen: st.drawerOpen,
+      drawerLabel: st.drawerOpen ? "Hide" : "Review",
+      toggleDrawer: this.toggleDrawer,
+      issues: issues.map((i) => ({
+        ...i,
+        ink: i.severity === "error" ? "var(--danger)" : "var(--cash-ink)",
+        bg: i.severity === "error" ? "var(--danger-bg)" : "var(--cash-bg)",
+      })),
+      jumpIssue: this.jumpIssue,
+      lockedShow: isJuly,
+      gridShow: !isJuly,
+      legend, legendEnter: this.legendEnter, legendLeave: this.legendLeave, legendClick: this.legendClick,
+      cells, cellClick: this.cellClick, chipDown: this.chipDown,
+      fairRows, rotation,
+      fairMonthLabel: "JUNE 2026",
+      ...popVals,
+      popClose: this.popClose, popAssign: this.popAssign,
+      confirmShow: st.confirmOpen,
+      confirmWarnShow: errs.length > 0,
+      confirmWarn: errs.length + " conflict" + (errs.length === 1 ? " is" : "s are") + " still unresolved — they will stay flagged after publishing.",
+      confirmCancel: this.confirmCancel, confirmGo: this.confirmGo,
+      toastShow: !!st.toast, toastText: st.toast || "",
+      dragShow: !!drag, ghostRef: this.ghostRef,
+      dragCode: dragPen ? M.PEOPLE[dragPen].code : "",
+      dragInk: dragPen ? "var(--pen-" + dragPen + "-ink)" : "var(--ink)",
+      dragBg: dragPen ? "var(--pen-" + dragPen + "-bg)" : "var(--surface)",
+      dragRing: drag && drag.over ? (drag.valid ? "var(--teal-ring)" : "var(--danger-ring)") : "transparent",
+    };
+  }
+}
+
+</script>
+</body>
+</html>
