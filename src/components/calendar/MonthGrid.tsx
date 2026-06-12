@@ -1,6 +1,18 @@
 // The heart of the app (docs/04): a Mon–Sun month grid of DutyChips in the
 // staff pen colors, with cash ◆ / post-cash ■ corner flags and dnd-kit swaps.
-import { DndContext, useDraggable, useDroppable, type DragEndEvent } from '@dnd-kit/core'
+import { useState } from 'react'
+import {
+  DndContext,
+  DragOverlay,
+  PointerSensor,
+  KeyboardSensor,
+  useDraggable,
+  useDroppable,
+  useSensor,
+  useSensors,
+  type DragEndEvent,
+  type DragStartEvent,
+} from '@dnd-kit/core'
 import type { Slot, Violation } from '../../api/rosters'
 import { dayOfWeek, monthGridRows } from '../../lib/dates'
 
@@ -19,8 +31,21 @@ export interface MonthGridProps {
 export function MonthGrid(props: MonthGridProps) {
   const byDate = new Map(props.slots.map((s) => [s.date.slice(0, 10), s]))
   const violationDates = new Set(props.violations.filter((v) => v.date).map((v) => v.date))
+  const [dragging, setDragging] = useState<Slot | null>(null)
+
+  // 6px of movement before a drag starts — keeps plain taps opening the day
+  // dialog instead of being swallowed by the drag listeners.
+  const sensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 6 } }),
+    useSensor(KeyboardSensor),
+  )
+
+  const handleDragStart = (event: DragStartEvent) => {
+    setDragging(props.slots.find((s) => s.id === event.active.id) ?? null)
+  }
 
   const handleDragEnd = (event: DragEndEvent) => {
+    setDragging(null)
     const { active, over } = event
     if (!over) return
     const from = props.slots.find((s) => s.id === active.id)
@@ -33,7 +58,12 @@ export function MonthGrid(props: MonthGridProps) {
   }
 
   return (
-    <DndContext onDragEnd={handleDragEnd}>
+    <DndContext
+      sensors={sensors}
+      onDragStart={handleDragStart}
+      onDragEnd={handleDragEnd}
+      onDragCancel={() => setDragging(null)}
+    >
       <div className="overflow-hidden rounded-lg border border-grid bg-sheet">
         <div className="grid grid-cols-7 border-b border-grid">
           {WEEKDAYS.map((d) => (
@@ -61,6 +91,10 @@ export function MonthGrid(props: MonthGridProps) {
           </div>
         ))}
       </div>
+      {/* Floating copy of the chip following the cursor, with a settle animation */}
+      <DragOverlay dropAnimation={{ duration: 180, easing: 'cubic-bezier(0.2, 0.8, 0.2, 1)' }}>
+        {dragging ? <ChipBody slot={dragging} className="scale-110 rotate-2 shadow-xl" /> : null}
+      </DragOverlay>
     </DndContext>
   )
 }
@@ -95,11 +129,11 @@ function DayCell({
           onClick()
         }
       }}
-      className={`relative min-h-14 border-b border-r border-grid p-1 md:min-h-18 md:p-1.5 ${
+      className={`relative min-h-14 border-r border-b border-grid p-1 md:min-h-18 md:p-1.5 ${
         weekend ? 'bg-weekend-bg' : 'bg-sheet'
-      } ${isOver ? 'ring-2 ring-inset ring-scrub-500' : ''} ${
-        hasViolation || slot?.conflictFlag ? 'ring-2 ring-inset ring-danger' : ''
-      } ${canEdit ? 'cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-scrub-500' : ''}`}
+      } ${isOver ? 'ring-2 ring-scrub-500 ring-inset' : ''} ${
+        hasViolation || slot?.conflictFlag ? 'ring-2 ring-danger ring-inset' : ''
+      } ${canEdit ? 'cursor-pointer focus-visible:ring-2 focus-visible:ring-scrub-500 focus-visible:outline-none' : ''}`}
     >
       <span className="font-mono text-xs text-ink-soft">{dayNum}</span>
       <div className="mt-0.5 flex flex-col items-center gap-0.5">
@@ -126,7 +160,7 @@ function DayCell({
         )}
       </div>
       {slot?.conflictFlag && slot.conflictReason && (
-        <span title={slot.conflictReason} className="absolute right-1 top-1 text-xs text-danger">
+        <span title={slot.conflictReason} className="absolute top-1 right-1 text-xs text-danger">
           ⚠
         </span>
       )}
@@ -134,31 +168,16 @@ function DayCell({
   )
 }
 
-function DutyChip({ slot, canEdit }: { slot: Slot; canEdit: boolean }) {
-  const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({
-    id: slot.id,
-    disabled: !canEdit,
-  })
-
+/** Presentational chip — used in cells and inside the DragOverlay. */
+function ChipBody({ slot, className = '' }: { slot: Slot; className?: string }) {
   return (
     <span
-      ref={setNodeRef}
-      {...listeners}
-      {...attributes}
-      onClick={(e) => {
-        // a real drag shouldn't also open the day dialog
-        if (isDragging) e.stopPropagation()
-      }}
       style={{
         color: `var(--color-${slot.staff.colorKey})`,
         backgroundColor: `var(--color-${slot.staff.colorKey}-bg)`,
-        transform: transform ? `translate(${transform.x}px, ${transform.y}px)` : undefined,
-        touchAction: 'none',
       }}
       title={slot.staff.fullName}
-      className={`relative inline-flex items-center gap-0.5 rounded-md px-2 py-0.5 text-sm font-semibold ${
-        isDragging ? 'z-10 scale-105 shadow-lg' : ''
-      } ${canEdit ? 'cursor-grab active:cursor-grabbing' : ''} motion-reduce:transition-none`}
+      className={`relative inline-flex items-center gap-0.5 rounded-md px-2 py-0.5 text-sm font-semibold ${className}`}
     >
       {slot.staff.shortCode}
       {slot.isCash && (
@@ -171,6 +190,26 @@ function DutyChip({ slot, canEdit }: { slot: Slot; canEdit: boolean }) {
           ■
         </span>
       )}
+    </span>
+  )
+}
+
+function DutyChip({ slot, canEdit }: { slot: Slot; canEdit: boolean }) {
+  const { attributes, listeners, setNodeRef, isDragging } = useDraggable({
+    id: slot.id,
+    disabled: !canEdit,
+  })
+
+  return (
+    <span ref={setNodeRef} {...listeners} {...attributes} style={{ touchAction: 'none' }}>
+      {/* keyed by assignee so a swap remounts the chip and replays the pop */}
+      <ChipBody
+        key={slot.staffId}
+        slot={slot}
+        className={`chip-pop ${isDragging ? 'opacity-30' : ''} ${
+          canEdit ? 'cursor-grab active:cursor-grabbing' : ''
+        }`}
+      />
     </span>
   )
 }

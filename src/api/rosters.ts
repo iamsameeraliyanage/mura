@@ -92,16 +92,54 @@ export const useGenerateRoster = () =>
       (await api.post<RosterResponse>('/rosters/generate', input)).data,
   )
 
-export const useSwapSlots = () =>
-  useRosterMutation(
-    async (input: { rosterId: string; slotAId: string; slotBId: string }) =>
+/** Optimistic: the chips trade places the instant they're dropped; the server
+ *  response (with fresh violations) replaces the guess, or we roll back. */
+export function useSwapSlots() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: async (input: { rosterId: string; slotAId: string; slotBId: string }) =>
       (
         await api.patch<RosterResponse>(`/rosters/${input.rosterId}/swap`, {
           slotAId: input.slotAId,
           slotBId: input.slotBId,
         })
       ).data,
-  )
+    onMutate: async ({ rosterId, slotAId, slotBId }) => {
+      await queryClient.cancelQueries({ queryKey: ['roster'] })
+      const entry = queryClient
+        .getQueriesData<RosterResponse>({ queryKey: ['roster'] })
+        .find(([, cached]) => cached?.roster?.id === rosterId)
+      if (!entry?.[1]?.roster) return {}
+      const [key, previous] = entry
+
+      const slots = previous.roster!.slots.map((s) => ({ ...s }))
+      const a = slots.find((s) => s.id === slotAId)
+      const b = slots.find((s) => s.id === slotBId)
+      if (a && b) {
+        ;[a.staffId, b.staffId] = [b.staffId, a.staffId]
+        ;[a.staff, b.staff] = [b.staff, a.staff]
+        queryClient.setQueryData<RosterResponse>(key, {
+          ...previous,
+          roster: { ...previous.roster!, slots },
+        })
+      }
+      return { key, previous }
+    },
+    onError: (_err, _input, context) => {
+      if (context?.key) queryClient.setQueryData(context.key, context.previous)
+    },
+    onSuccess: (data) => {
+      if (data.roster) {
+        queryClient.setQueryData(
+          rosterKey(data.roster.unitId, data.roster.layer, data.roster.month),
+          data,
+        )
+      }
+      queryClient.invalidateQueries({ queryKey: ['fairness'] })
+      queryClient.invalidateQueries({ queryKey: ['audit'] })
+    },
+  })
+}
 
 export const useAssignSlot = () =>
   useRosterMutation(
