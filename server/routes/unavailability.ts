@@ -1,12 +1,13 @@
 // Unavailable dates per staff member ("Dr. Gihan away 10th–15th").
-// Editors manage these for their own unit; admins for any unit.
+// Anyone who can view a ward (its roster admins and the admins above it)
+// may mark and clear unavailability there.
 import { Hono } from 'hono'
 import { HTTPException } from 'hono/http-exception'
 import { zValidator } from '@hono/zod-validator'
 import { unavailabilityCreateSchema } from '../../shared/schemas'
 import { db } from '../db'
 import { writeAudit } from '../lib/audit'
-import { assertScope, requireAuth, type AuthEnv } from '../middleware/auth'
+import { assertUnitView, requireAuth, visibleUnitsWhere, type AuthEnv } from '../middleware/auth'
 
 export const unavailabilityRoutes = new Hono<AuthEnv>()
 
@@ -17,11 +18,12 @@ const day = (d: string) => new Date(`${d}T00:00:00.000Z`)
 unavailabilityRoutes.get('/', async (c) => {
   const staffId = c.req.query('staffId')
   const unitId = c.req.query('unitId')
+  const unitScope = visibleUnitsWhere(c.get('user'))
   return c.json(
     await db.unavailabilityDate.findMany({
       where: {
         ...(staffId ? { staffId } : {}),
-        ...(unitId ? { staff: { unitId } } : {}),
+        staff: { ...(unitId ? { unitId } : {}), ...(unitScope ? { unit: unitScope } : {}) },
       },
       include: { staff: { select: { id: true, fullName: true, shortCode: true, unitId: true } } },
       orderBy: { from: 'asc' },
@@ -33,7 +35,7 @@ unavailabilityRoutes.post('/', zValidator('json', unavailabilityCreateSchema), a
   const input = c.req.valid('json')
   const staff = await db.staffMember.findUnique({ where: { id: input.staffId } })
   if (!staff) throw new HTTPException(404, { message: 'Staff member not found' })
-  assertScope(c, staff.unitId)
+  await assertUnitView(c, staff.unitId)
 
   const row = await db.unavailabilityDate.create({
     data: {
@@ -57,7 +59,7 @@ unavailabilityRoutes.delete('/:id', async (c) => {
   const id = c.req.param('id')
   const row = await db.unavailabilityDate.findUnique({ where: { id }, include: { staff: true } })
   if (!row) throw new HTTPException(404, { message: 'Not found' })
-  assertScope(c, row.staff.unitId)
+  await assertUnitView(c, row.staff.unitId)
 
   await db.unavailabilityDate.delete({ where: { id } })
   await writeAudit({

@@ -5,7 +5,8 @@ import { AppShell } from './components/AppShell'
 import Login from './pages/Login'
 import Dashboard from './pages/Dashboard'
 import StaffPage from './pages/admin/Staff'
-import RosterPage from './pages/roster/RosterPage'
+import OrganisationPage from './pages/admin/Organisation'
+import { RosterRoute } from './pages/roster/RosterPage'
 import FairnessPage from './pages/Fairness'
 import UnavailabilityPage from './pages/Unavailability'
 import SharePage from './pages/Share'
@@ -24,22 +25,22 @@ export const router = createBrowserRouter([
             element: <AppShell />,
             children: [
               { index: true, element: <Dashboard /> },
-              { path: 'roster/consultant', element: <RosterPage layer="CONSULTANT" /> },
-              { path: 'roster/sho', element: <RosterPage layer="SHO" /> },
+              { path: 'roster/:layer', element: <RosterRoute /> },
               { path: 'fairness', element: <FairnessPage /> },
               { path: 'unavailability', element: <UnavailabilityPage /> },
               { path: 'share', element: <SharePage /> },
               { path: 'audit', element: <AuditPage /> },
+              {
+                element: (
+                  <RequireAuth roles={['SUPER_ADMIN', 'HOSPITAL_ADMIN', 'DEPARTMENT_ADMIN']} />
+                ),
+                children: [{ path: 'admin/staff', element: <StaffPage /> }],
+              },
+              {
+                element: <RequireAuth roles={['SUPER_ADMIN', 'HOSPITAL_ADMIN']} />,
+                children: [{ path: 'admin/organisation', element: <OrganisationPage /> }],
+              },
             ],
-          },
-        ],
-      },
-      {
-        element: <RequireAuth roles={['ADMIN']} />,
-        children: [
-          {
-            element: <AppShell />,
-            children: [{ path: 'admin/staff', element: <StaffPage /> }],
           },
         ],
       },

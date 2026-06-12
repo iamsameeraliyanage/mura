@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { isAxiosError } from 'axios'
-import type { Role } from '../../shared/types'
+import type { Role, RosterLayer } from '../../shared/types'
 import { api } from './client'
 
 export interface Me {
@@ -8,7 +8,11 @@ export interface Me {
   email: string
   displayName: string
   role: Role
+  hospitalId: string | null
+  departmentId: string | null
   unitId: string | null
+  rosterLayers: RosterLayer[]
+  staffId: string | null
 }
 
 export function useMe() {

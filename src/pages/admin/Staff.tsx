@@ -1,16 +1,35 @@
+// Ward & staff — the DEPARTMENT_ADMIN's home: wards, staff, roster types
+// (DutyConfig rows) and the roster-admin accounts that run them.
 import { useState } from 'react'
 import { format } from 'date-fns'
-import type { Role, StaffKind } from '../../../shared/types'
+import {
+  LAYER_DEFAULT_POOL,
+  ROLE_LABELS,
+  ROSTER_LAYERS,
+  STAFF_KINDS,
+  type Role,
+  type RosterLayer,
+  type StaffKind,
+} from '../../../shared/types'
+import { useMe } from '../../api/auth'
 import {
   useCreateHoliday,
   useCreateStaff,
-  useCreateUser,
+  useCreateUnit,
+  useDeleteDutyConfig,
   useDeleteHoliday,
+  useDutyConfigs,
   useHolidays,
   useStaff,
   useUpdateStaff,
+  useUpsertDutyConfig,
   useUsers,
+  type AppUser,
+  type DutyConfig,
+  type Staff,
 } from '../../api/admin'
+import { AccountModal } from '../../components/AccountModal'
+import { NAV_LAYER_LABELS } from '../../components/AppShell'
 import {
   Button,
   Card,
@@ -20,15 +39,14 @@ import {
   Modal,
   PEN_KEYS,
   PenChip,
-  Select,
   useToast,
 } from '../../components/ui'
-import { useUnitId } from '../../lib/useUnitId'
+import { useScope } from '../../lib/scope'
 
 const SHIFTS = [
   {
     duty: 'On-call',
-    layer: 'SHO/RHO',
+    layer: 'Pool',
     time: '8:00 am → next day 4:00 pm',
     hours: '32 h',
     note: 'Every day · exactly one person',
@@ -70,43 +88,51 @@ const SHIFTS = [
   },
 ]
 
-const ROLE_BADGE: Record<Role, { label: string; cls: string }> = {
-  ADMIN: { label: 'ADMIN', cls: 'bg-sunken text-ink-2' },
-  CONSULTANT_EDITOR: { label: 'CONSULTANT EDITOR', cls: 'bg-draft-bg text-draft' },
-  SHO_EDITOR: { label: 'SHO EDITOR', cls: 'bg-published-bg text-published' },
-}
-
-const ROLE_POWERS: Record<Role, string> = {
-  ADMIN: 'Hospitals, departments, staff, users, shift config',
-  CONSULTANT_EDITOR: 'Creates & publishes the consultant casualty roster',
-  SHO_EDITOR: 'Builds the SHO/RHO roster once consultants publish',
+const ROLE_BADGE: Record<Role, string> = {
+  SUPER_ADMIN: 'bg-sunken text-ink-2',
+  HOSPITAL_ADMIN: 'bg-postcash-bg text-postcash',
+  DEPARTMENT_ADMIN: 'bg-draft-bg text-draft',
+  ROSTER_ADMIN: 'bg-published-bg text-published',
 }
 
 export default function StaffPage() {
-  const unitId = useUnitId()
+  const { data: me } = useMe()
+  const { hospital, department, unit, setUnitId } = useScope()
+  const unitId = unit?.id
   const toast = useToast()
   const { data: staff = [] } = useStaff(unitId)
   const { data: users = [] } = useUsers()
   const { data: holidays = [] } = useHolidays()
+  const { data: configs = [] } = useDutyConfigs(unitId)
   const updateStaff = useUpdateStaff()
 
   const [addOpen, setAddOpen] = useState(false)
   const [seatOpen, setSeatOpen] = useState(false)
   const [userOpen, setUserOpen] = useState(false)
+  const [typeOpen, setTypeOpen] = useState(false)
 
   const seat = staff.find((s) => s.isSeat)
   const consultants = staff.filter((s) => s.kind === 'CONSULTANT')
-  const pool = staff.filter((s) => s.kind === 'SHO' || s.kind === 'RHO')
-  const activePool = pool.filter((s) => !s.activeUntil)
-  const shoCount = activePool.filter((s) => s.kind === 'SHO').length
+
+  // One staff card per pool roster type, plus a card for anyone left over.
+  const poolConfigs = configs.filter((c) => c.layer !== 'CONSULTANT')
+  const pooled = new Set(
+    poolConfigs.flatMap((c) => staff.filter((s) => c.poolKinds.includes(s.kind)).map((s) => s.id)),
+  )
+  const other = staff.filter((s) => s.kind !== 'CONSULTANT' && !pooled.has(s.id))
+
+  const accountRoles: Role[] =
+    me?.role === 'DEPARTMENT_ADMIN' ? ['ROSTER_ADMIN'] : ['ROSTER_ADMIN', 'DEPARTMENT_ADMIN']
 
   return (
     <div className="mx-auto max-w-[1040px] px-4 py-6 md:px-7 md:py-[30px]">
       <div className="flex flex-wrap items-end gap-4">
         <div className="flex-1">
-          <MiniLabel>Admin · Lady Ridgeway Hospital → Paediatrics → Prof Unit</MiniLabel>
+          <MiniLabel>
+            Admin · {[hospital?.name, department?.name, unit?.name].filter(Boolean).join(' → ')}
+          </MiniLabel>
           <h1 className="mt-1.5 font-display text-[28px] leading-[1.1] font-semibold tracking-tight md:text-4xl">
-            Staff & configuration
+            Ward & staff
           </h1>
         </div>
         <div className="pb-1">
@@ -114,9 +140,55 @@ export default function StaffPage() {
         </div>
       </div>
 
+      {/* ── Wards of this department ── */}
+      {department && (
+        <WardsCard
+          departmentId={department.id}
+          units={department.units}
+          activeUnitId={unitId}
+          onSelect={setUnitId}
+        />
+      )}
+
+      {/* ── Roster types of this ward ── */}
+      <Card className="mt-3.5 overflow-hidden">
+        <div className="flex flex-wrap items-baseline justify-between gap-2 px-4 pt-3.5 pb-2.5">
+          <span className="text-[15px] font-semibold">Roster types</span>
+          <span className="flex items-center gap-3">
+            <span className="font-mono text-[11px] text-ink-2 uppercase">
+              Each gets its own calendar, generator & fairness
+            </span>
+            <button
+              onClick={() => setTypeOpen(true)}
+              className="h-7 rounded-md border border-grid bg-surface px-2.5 text-xs font-semibold text-teal-700 hover:bg-teal-50"
+            >
+              Add roster type
+            </button>
+          </span>
+        </div>
+        {configs.map((cfg) => (
+          <RosterTypeRow
+            key={cfg.id}
+            cfg={cfg}
+            admins={users.filter(
+              (u) =>
+                u.role === 'ROSTER_ADMIN' &&
+                u.unitId === unitId &&
+                u.rosterLayers.includes(cfg.layer),
+            )}
+          />
+        ))}
+        {configs.length === 0 && (
+          <p className="border-t border-grid px-4 py-5 text-sm text-ink-2">
+            No roster types yet — add one (e.g. SHO/RHO on-call or a Nurses roster) and it
+            appears in everyone's sidebar.
+          </p>
+        )}
+      </Card>
+
       {/* ── Prof Unit seat ── */}
       {seat && (
-        <Card className="mt-6 p-[17px]">
+        <Card className="mt-3.5 p-[17px]">
           <div className="flex flex-wrap items-center gap-2.5">
             <PenChip colorKey={seat.colorKey} code={seat.shortCode} size="md" />
             <div className="min-w-0 flex-1">
@@ -132,9 +204,7 @@ export default function StaffPage() {
             </div>
             <div className="text-right">
               <MiniLabel className="text-ink-3!">Current holder</MiniLabel>
-              <div className="mt-0.5 text-[13.5px] font-semibold">
-                {seat.currentHolder ?? '—'}
-              </div>
+              <div className="mt-0.5 text-[13.5px] font-semibold">{seat.currentHolder ?? '—'}</div>
             </div>
             <button
               onClick={() => setSeatOpen(true)}
@@ -148,82 +218,43 @@ export default function StaffPage() {
 
       {/* ── Staff tables ── */}
       <div className="mt-3.5 grid grid-cols-1 items-start gap-3.5 lg:grid-cols-2">
-        <Card className="overflow-hidden">
-          <div className="flex items-baseline justify-between px-4 pt-3.5 pb-2.5">
-            <span className="text-[15px] font-semibold">Consultant layer</span>
-            <span className="font-mono text-[11px] text-ink-2 uppercase">
-              {consultants.length} seats
-            </span>
-          </div>
-          {consultants.map((s) => (
-            <div key={s.id} className="flex items-center gap-[11px] border-t border-grid px-4 py-[11px]">
-              <span
-                title="pen color"
-                className="h-3.5 w-3.5 shrink-0 rounded"
-                style={{ backgroundColor: `var(--color-${s.colorKey}-dot)` }}
-              />
-              <PenChip colorKey={s.colorKey} code={s.shortCode} size="sm" />
-              <span className="min-w-0 flex-1">
-                <span className="block truncate text-[13.5px] font-medium">
-                  {s.isSeat && s.currentHolder ? `${s.fullName} — ${s.currentHolder}` : s.fullName}
-                </span>
-                <span className="block text-[11px] text-ink-2">
-                  {s.isSeat ? 'Seat · holder can change' : 'Consultant'}
-                </span>
-              </span>
-              <span className="font-mono text-[11px] whitespace-nowrap text-ink-2 uppercase">
-                {format(new Date(s.activeFrom), 'MMM yyyy')}
-              </span>
-            </div>
-          ))}
-        </Card>
-
-        <Card className="overflow-hidden">
-          <div className="flex items-baseline justify-between px-4 pt-3.5 pb-2.5">
-            <span className="text-[15px] font-semibold">SHO/RHO pool</span>
-            <span className="font-mono text-[11px] text-ink-2 uppercase">
-              Pool of {activePool.length} · {shoCount} SHO + {activePool.length - shoCount} RHO
-            </span>
-          </div>
-          {pool.map((s) => (
-            <div
-              key={s.id}
-              className={`flex items-center gap-[11px] border-t border-grid px-4 py-[11px] ${
-                s.activeUntil ? 'opacity-60' : ''
-              }`}
-            >
-              <span
-                title="pen color"
-                className="h-3.5 w-3.5 shrink-0 rounded"
-                style={{ backgroundColor: `var(--color-${s.colorKey}-dot)` }}
-              />
-              <PenChip colorKey={s.colorKey} code={s.shortCode} size="sm" />
-              <span className="min-w-0 flex-1">
-                <span className="block truncate text-[13.5px] font-medium">{s.fullName}</span>
-                <span className="block text-[11px] text-ink-2">
-                  {s.kind} · combined pool, same duties
-                </span>
-              </span>
-              <span className="font-mono text-[11px] whitespace-nowrap text-ink-2 uppercase">
-                {format(new Date(s.activeFrom), 'MMM yyyy')} →
-                {s.activeUntil ? ` ${format(new Date(s.activeUntil), 'MMM yyyy')}` : ''}
-              </span>
-            </div>
-          ))}
-          <div className="border-t border-grid bg-sunken px-4 py-2.5 text-[11.5px] leading-normal text-ink-2">
-            RHOs rotate out every few months. New members start their fairness counts at 0 —
-            history of leavers is kept permanently.
-          </div>
-        </Card>
+        {consultants.length > 0 && (
+          <StaffTable
+            title="Consultant layer"
+            caption={`${consultants.length} seats`}
+            members={consultants}
+          />
+        )}
+        {poolConfigs.map((cfg) => {
+          const members = staff.filter((s) => cfg.poolKinds.includes(s.kind))
+          const active = members.filter((s) => !s.activeUntil)
+          return (
+            <StaffTable
+              key={cfg.id}
+              title={`${NAV_LAYER_LABELS[cfg.layer].replace(' roster', '')} pool`}
+              caption={`Pool of ${active.length} · ${cfg.poolKinds.join(' + ')}`}
+              members={members}
+              footer="New members start their fairness counts at 0 — history of leavers is kept permanently."
+            />
+          )
+        })}
+        {other.length > 0 && (
+          <StaffTable
+            title="Other staff"
+            caption="Not in any roster pool yet"
+            members={other}
+            footer="Add a roster type whose pool includes their job title to roster them."
+          />
+        )}
       </div>
 
-      {/* ── Editors ── */}
+      {/* ── Accounts ── */}
       <Card className="mt-3.5 overflow-hidden">
         <div className="flex flex-wrap items-baseline justify-between gap-2 px-4 pt-3.5 pb-2.5">
-          <span className="text-[15px] font-semibold">Editor accounts</span>
+          <span className="text-[15px] font-semibold">Accounts</span>
           <span className="flex items-center gap-3">
             <span className="font-mono text-[11px] text-ink-2 uppercase">
-              No self-signup · scoped to Prof Unit
+              No self-signup · each scoped to their level
             </span>
             <button
               onClick={() => setUserOpen(true)}
@@ -234,23 +265,7 @@ export default function StaffPage() {
           </span>
         </div>
         {users.map((u) => (
-          <div key={u.id} className="flex flex-wrap items-center gap-[11px] border-t border-grid px-4 py-[11px]">
-            <span className="flex h-[26px] w-[26px] shrink-0 items-center justify-center rounded-full bg-teal-50 text-[11px] font-bold text-teal-700">
-              {u.displayName.replace('Dr. ', '').slice(0, 1).toUpperCase()}
-            </span>
-            <span className="min-w-0 flex-1">
-              <span className="block text-[13.5px] font-medium">{u.displayName}</span>
-              <span className="block font-mono text-[11px] text-ink-2">{u.email}</span>
-            </span>
-            <span
-              className={`inline-flex h-5 items-center rounded px-2 text-[10px] font-bold tracking-[0.04em] ${ROLE_BADGE[u.role].cls}`}
-            >
-              {ROLE_BADGE[u.role].label}
-            </span>
-            <span className="hidden w-[280px] text-xs text-ink-2 xl:inline">
-              {ROLE_POWERS[u.role]}
-            </span>
-          </div>
+          <UserRow key={u.id} user={u} />
         ))}
       </Card>
 
@@ -295,7 +310,7 @@ export default function StaffPage() {
         <AddStaffModal
           open={addOpen}
           unitId={unitId}
-          taken={pool.filter((s) => !s.activeUntil).map((s) => s.colorKey)}
+          taken={staff.filter((s) => !s.activeUntil).map((s) => s.colorKey)}
           onClose={() => setAddOpen(false)}
           onDone={(name, from) => {
             setAddOpen(false)
@@ -321,16 +336,321 @@ export default function StaffPage() {
           }
         />
       )}
-      <AddUserModal
+      <AccountModal
         open={userOpen}
-        unitId={unitId}
         onClose={() => setUserOpen(false)}
         onDone={(name) => {
           setUserOpen(false)
           toast(`Account created for ${name}`)
         }}
+        roles={accountRoles}
+        departmentId={department?.id}
+        unitId={unitId}
+        layers={configs.map((c) => c.layer)}
+        staff={staff.filter((s) => !s.isSeat && !s.activeUntil)}
       />
+      {unitId && (
+        <AddRosterTypeModal
+          open={typeOpen}
+          unitId={unitId}
+          existing={configs.map((c) => c.layer)}
+          onClose={() => setTypeOpen(false)}
+          onDone={(layer) => {
+            setTypeOpen(false)
+            toast(`${NAV_LAYER_LABELS[layer]} created — it's in the sidebar now`)
+          }}
+        />
+      )}
     </div>
+  )
+}
+
+function WardsCard({
+  departmentId,
+  units,
+  activeUnitId,
+  onSelect,
+}: {
+  departmentId: string
+  units: { id: string; name: string }[]
+  activeUnitId: string | undefined
+  onSelect: (id: string) => void
+}) {
+  const create = useCreateUnit()
+  const toast = useToast()
+  const [name, setName] = useState('')
+  return (
+    <Card className="mt-6 p-4">
+      <div className="flex flex-wrap items-center gap-2">
+        <MiniLabel className="text-ink-3!">Wards</MiniLabel>
+        <span className="flex-1" />
+        <Input
+          value={name}
+          onChange={(e) => setName(e.target.value)}
+          placeholder="New ward name…"
+          className="h-8! w-44!"
+        />
+        <Button
+          variant="outline"
+          disabled={!name || create.isPending}
+          onClick={() =>
+            create.mutate(
+              { departmentId, name },
+              {
+                onSuccess: () => {
+                  toast(`${name} created`)
+                  setName('')
+                },
+                onError: () => toast('Could not create the ward — name already used?'),
+              },
+            )
+          }
+        >
+          Add ward
+        </Button>
+      </div>
+      <div className="mt-2.5 flex flex-wrap gap-1.5">
+        {units.map((u) => (
+          <button
+            key={u.id}
+            onClick={() => onSelect(u.id)}
+            className={`h-8 rounded-md border px-3 text-[12.5px] font-semibold transition-colors ${
+              u.id === activeUnitId
+                ? 'border-teal-600 bg-teal-50 text-teal-700'
+                : 'border-grid bg-surface text-ink-2 hover:border-grid-strong'
+            }`}
+          >
+            {u.name}
+          </button>
+        ))}
+      </div>
+      <p className="mt-2 text-[11px] text-ink-3">
+        Everything below — staff, roster types, accounts — belongs to the selected ward.
+      </p>
+    </Card>
+  )
+}
+
+function RosterTypeRow({ cfg, admins }: { cfg: DutyConfig; admins: AppUser[] }) {
+  const remove = useDeleteDutyConfig()
+  const toast = useToast()
+  return (
+    <div className="flex flex-wrap items-center gap-x-3 gap-y-1 border-t border-grid px-4 py-[11px]">
+      <span className="w-[180px] text-[13.5px] font-semibold">{NAV_LAYER_LABELS[cfg.layer]}</span>
+      <span className="flex gap-1">
+        {cfg.poolKinds.map((k) => (
+          <span
+            key={k}
+            className="inline-flex h-[19px] items-center rounded bg-sunken px-[7px] text-[10px] font-bold tracking-[0.04em] text-ink-2"
+          >
+            {k}
+          </span>
+        ))}
+      </span>
+      <span className="min-w-[140px] flex-1 text-xs text-ink-2">
+        {admins.length
+          ? `Run by ${admins.map((a) => a.displayName).join(', ')}`
+          : 'No roster admin yet — the department admin runs it'}
+      </span>
+      <button
+        title="Remove roster type"
+        onClick={() =>
+          remove.mutate(cfg.id, {
+            onSuccess: () => toast('Roster type removed'),
+            onError: (err) =>
+              toast(
+                (err as { response?: { data?: { error?: string } } })?.response?.data?.error ??
+                  'Could not remove',
+              ),
+          })
+        }
+        className="h-6 w-6 rounded border border-grid text-xs text-ink-3 hover:border-danger hover:text-danger"
+      >
+        ×
+      </button>
+    </div>
+  )
+}
+
+function StaffTable({
+  title,
+  caption,
+  members,
+  footer,
+}: {
+  title: string
+  caption: string
+  members: Staff[]
+  footer?: string
+}) {
+  return (
+    <Card className="overflow-hidden">
+      <div className="flex items-baseline justify-between px-4 pt-3.5 pb-2.5">
+        <span className="text-[15px] font-semibold">{title}</span>
+        <span className="font-mono text-[11px] text-ink-2 uppercase">{caption}</span>
+      </div>
+      {members.map((s) => (
+        <div
+          key={s.id}
+          className={`flex items-center gap-[11px] border-t border-grid px-4 py-[11px] ${
+            s.activeUntil ? 'opacity-60' : ''
+          }`}
+        >
+          <span
+            title="pen color"
+            className="h-3.5 w-3.5 shrink-0 rounded"
+            style={{ backgroundColor: `var(--color-${s.colorKey}-dot)` }}
+          />
+          <PenChip colorKey={s.colorKey} code={s.shortCode} size="sm" />
+          <span className="min-w-0 flex-1">
+            <span className="block truncate text-[13.5px] font-medium">
+              {s.isSeat && s.currentHolder ? `${s.fullName} — ${s.currentHolder}` : s.fullName}
+            </span>
+            <span className="block text-[11px] text-ink-2">
+              {s.isSeat ? 'Seat · holder can change' : s.kind}
+            </span>
+          </span>
+          <span className="font-mono text-[11px] whitespace-nowrap text-ink-2 uppercase">
+            {format(new Date(s.activeFrom), 'MMM yyyy')} →
+            {s.activeUntil ? ` ${format(new Date(s.activeUntil), 'MMM yyyy')}` : ''}
+          </span>
+        </div>
+      ))}
+      {footer && (
+        <div className="border-t border-grid bg-sunken px-4 py-2.5 text-[11.5px] leading-normal text-ink-2">
+          {footer}
+        </div>
+      )}
+    </Card>
+  )
+}
+
+function UserRow({ user }: { user: AppUser }) {
+  const scopeLine =
+    user.role === 'ROSTER_ADMIN'
+      ? `Runs ${user.rosterLayers.map((l) => NAV_LAYER_LABELS[l].replace(' roster', '')).join(', ') || '—'}`
+      : user.role === 'DEPARTMENT_ADMIN'
+        ? 'Wards, staff, roster types & roster admins'
+        : user.role === 'HOSPITAL_ADMIN'
+          ? 'Departments & department admins'
+          : 'Everything, every hospital'
+  return (
+    <div className="flex flex-wrap items-center gap-[11px] border-t border-grid px-4 py-[11px]">
+      <span className="flex h-[26px] w-[26px] shrink-0 items-center justify-center rounded-full bg-teal-50 text-[11px] font-bold text-teal-700">
+        {user.displayName.replace('Dr. ', '').slice(0, 1).toUpperCase()}
+      </span>
+      <span className="min-w-0 flex-1">
+        <span className="block text-[13.5px] font-medium">{user.displayName}</span>
+        <span className="block font-mono text-[11px] text-ink-2">{user.email}</span>
+      </span>
+      <span
+        className={`inline-flex h-5 items-center rounded px-2 text-[10px] font-bold tracking-[0.04em] uppercase ${ROLE_BADGE[user.role]}`}
+      >
+        {ROLE_LABELS[user.role]}
+      </span>
+      <span className="hidden w-[280px] text-xs text-ink-2 xl:inline">{scopeLine}</span>
+    </div>
+  )
+}
+
+function AddRosterTypeModal({
+  open,
+  unitId,
+  existing,
+  onClose,
+  onDone,
+}: {
+  open: boolean
+  unitId: string
+  existing: RosterLayer[]
+  onClose: () => void
+  onDone: (layer: RosterLayer) => void
+}) {
+  const upsert = useUpsertDutyConfig()
+  const toast = useToast()
+  const available = ROSTER_LAYERS.filter((l) => !existing.includes(l))
+  const [layer, setLayer] = useState<RosterLayer | null>(null)
+  const [kinds, setKinds] = useState<StaffKind[]>([])
+
+  const pick = (l: RosterLayer) => {
+    setLayer(l)
+    setKinds(LAYER_DEFAULT_POOL[l])
+  }
+  const toggleKind = (k: StaffKind) =>
+    setKinds((p) => (p.includes(k) ? p.filter((x) => x !== k) : [...p, k]))
+
+  const save = () => {
+    if (!layer || kinds.length === 0) {
+      toast('Pick a roster type and at least one job title for its pool')
+      return
+    }
+    upsert.mutate(
+      { unitId, layer, poolKinds: kinds, config: { timezone: 'Asia/Colombo' } },
+      {
+        onSuccess: () => {
+          onDone(layer)
+          setLayer(null)
+        },
+        onError: () => toast('Could not create the roster type'),
+      },
+    )
+  }
+
+  return (
+    <Modal open={open} onClose={onClose} title="Add a roster type" width="w-[420px]">
+      {available.length === 0 ? (
+        <p className="text-sm text-ink-2">Every roster type already exists for this ward.</p>
+      ) : (
+        <>
+          <MiniLabel>Roster</MiniLabel>
+          <div className="mt-1.5 flex flex-wrap gap-1.5">
+            {available.map((l) => (
+              <button
+                key={l}
+                onClick={() => pick(l)}
+                className={`h-8 rounded-md border px-3 text-xs font-semibold ${
+                  layer === l ? 'border-teal-600 bg-teal-50 text-teal-700' : 'border-grid bg-surface'
+                }`}
+              >
+                {NAV_LAYER_LABELS[l]}
+              </button>
+            ))}
+          </div>
+          <div className="mt-3.5">
+            <MiniLabel>Who is in the pool</MiniLabel>
+            <div className="mt-1.5 flex flex-wrap gap-1.5">
+              {STAFF_KINDS.map((k) => (
+                <button
+                  key={k}
+                  onClick={() => toggleKind(k)}
+                  className={`h-8 rounded-md border px-3 text-xs font-semibold ${
+                    kinds.includes(k)
+                      ? 'border-teal-600 bg-teal-50 text-teal-700'
+                      : 'border-grid bg-surface text-ink-2'
+                  }`}
+                >
+                  {k}
+                </button>
+              ))}
+            </div>
+            <p className="mt-1.5 text-[10px] text-ink-3">
+              Staff with these job titles share one pool and one fairness count (Pead combines SHO
+              + RHO).
+            </p>
+          </div>
+        </>
+      )}
+      <div className="mt-5 flex justify-end gap-2">
+        <Button variant="ghost" onClick={onClose}>
+          Cancel
+        </Button>
+        {available.length > 0 && (
+          <Button disabled={upsert.isPending} onClick={save}>
+            Create roster type
+          </Button>
+        )}
+      </div>
+    </Modal>
   )
 }
 
@@ -382,7 +702,7 @@ function AddStaffModal({
   }
 
   return (
-    <Modal open={open} onClose={onClose} title="Add to the SHO/RHO pool" width="w-[420px]">
+    <Modal open={open} onClose={onClose} title="Add a staff member" width="w-[420px]">
       <div className="flex gap-2.5">
         <div className="flex-1">
           <Field label="Full name">
@@ -400,47 +720,47 @@ function AddStaffModal({
           </Field>
         </div>
       </div>
-      <div className="mt-3.5 flex gap-2.5">
-        <div className="w-[130px]">
-          <MiniLabel>Job title</MiniLabel>
-          <div className="mt-1.5 flex gap-1">
-            {(['SHO', 'RHO'] as const).map((k) => (
+      <div className="mt-3.5">
+        <MiniLabel>Job title</MiniLabel>
+        <div className="mt-1.5 flex flex-wrap gap-1">
+          {STAFF_KINDS.map((k) => (
+            <button
+              key={k}
+              onClick={() => setKind(k)}
+              className={`h-8 rounded-md border px-2.5 text-xs font-semibold ${
+                kind === k ? 'border-teal-600 bg-teal-50' : 'border-grid bg-surface'
+              }`}
+            >
+              {k}
+            </button>
+          ))}
+        </div>
+        <p className="mt-1.5 text-[10px] text-ink-3">
+          The job title decides which roster pools they join.
+        </p>
+      </div>
+      <div className="mt-3.5">
+        <MiniLabel>Pen color</MiniLabel>
+        <div className="mt-2 flex flex-wrap gap-1.5">
+          {PEN_KEYS.map((k) => {
+            const isTaken = taken.includes(k)
+            return (
               <button
                 key={k}
-                onClick={() => setKind(k)}
-                className={`h-8 flex-1 rounded-md border text-xs font-semibold ${
-                  kind === k ? 'border-teal-600 bg-teal-50' : 'border-grid bg-surface'
-                }`}
-              >
-                {k}
-              </button>
-            ))}
-          </div>
-          <p className="mt-1.5 text-[10px] text-ink-3">Profile info only — one pool, same duties.</p>
+                title={isTaken ? 'Taken' : 'Available'}
+                disabled={isTaken}
+                onClick={() => setPen(k)}
+                className={`h-[26px] w-[26px] rounded-md border-2 ${
+                  pen === k ? 'border-ink' : 'border-transparent'
+                } ${isTaken ? 'cursor-not-allowed opacity-25' : 'cursor-pointer'}`}
+                style={{ backgroundColor: `var(--color-${k}-dot)` }}
+              />
+            )
+          })}
         </div>
-        <div className="flex-1">
-          <MiniLabel>Pen color</MiniLabel>
-          <div className="mt-2 flex flex-wrap gap-1.5">
-            {PEN_KEYS.map((k) => {
-              const isTaken = taken.includes(k)
-              return (
-                <button
-                  key={k}
-                  title={isTaken ? 'Taken' : 'Available'}
-                  disabled={isTaken}
-                  onClick={() => setPen(k)}
-                  className={`h-[26px] w-[26px] rounded-md border-2 ${
-                    pen === k ? 'border-ink' : 'border-transparent'
-                  } ${isTaken ? 'cursor-not-allowed opacity-25' : 'cursor-pointer'}`}
-                  style={{ backgroundColor: `var(--color-${k}-dot)` }}
-                />
-              )
-            })}
-          </div>
-          <p className="mt-1.5 text-[10px] text-ink-3">
-            Dimmed pens are taken. Doctors recognise their color before their letter.
-          </p>
-        </div>
+        <p className="mt-1.5 text-[10px] text-ink-3">
+          Dimmed pens are taken. Doctors recognise their color before their letter.
+        </p>
       </div>
       <div className="mt-3.5">
         <MiniLabel>Active from</MiniLabel>
@@ -459,7 +779,7 @@ function AddStaffModal({
           Cancel
         </Button>
         <Button disabled={create.isPending} onClick={save}>
-          Add to pool
+          Add staff member
         </Button>
       </div>
     </Modal>
@@ -498,91 +818,7 @@ function SeatModal({
   )
 }
 
-function AddUserModal({
-  open,
-  unitId,
-  onClose,
-  onDone,
-}: {
-  open: boolean
-  unitId: string | undefined
-  onClose: () => void
-  onDone: (name: string) => void
-}) {
-  const create = useCreateUser()
-  const toast = useToast()
-  const [name, setName] = useState('')
-  const [email, setEmail] = useState('')
-  const [password, setPassword] = useState('')
-  const [role, setRole] = useState<Role>('SHO_EDITOR')
-
-  const save = () => {
-    if (!name || !email || password.length < 8) {
-      toast('Name, email and an 8+ character password are required')
-      return
-    }
-    create.mutate(
-      {
-        email,
-        password,
-        displayName: name,
-        role,
-        unitId: role === 'ADMIN' ? null : unitId,
-      },
-      {
-        onSuccess: () => {
-          onDone(name)
-          setName('')
-          setEmail('')
-          setPassword('')
-        },
-        onError: () => toast('Could not create the account — is the email already used?'),
-      },
-    )
-  }
-
-  return (
-    <Modal open={open} onClose={onClose} title="Add an account" width="w-[400px]">
-      <div className="flex flex-col gap-3">
-        <Field label="Display name">
-          <Input value={name} onChange={(e) => setName(e.target.value)} placeholder="e.g. Dr. Wasana" />
-        </Field>
-        <Field label="Email">
-          <Input
-            type="email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            placeholder="name@health.gov.lk"
-          />
-        </Field>
-        <Field label="Password">
-          <Input type="password" value={password} onChange={(e) => setPassword(e.target.value)} />
-        </Field>
-        <Field label="Role">
-          <Select value={role} onChange={(e) => setRole(e.target.value as Role)}>
-            <option value="CONSULTANT_EDITOR">Consultant roster editor</option>
-            <option value="SHO_EDITOR">SHO/RHO roster editor</option>
-            <option value="ADMIN">Admin</option>
-          </Select>
-        </Field>
-      </div>
-      <div className="mt-5 flex justify-end gap-2">
-        <Button variant="ghost" onClick={onClose}>
-          Cancel
-        </Button>
-        <Button disabled={create.isPending} onClick={save}>
-          Create account
-        </Button>
-      </div>
-    </Modal>
-  )
-}
-
-function HolidaysCard({
-  holidays,
-}: {
-  holidays: { id: string; date: string; name: string }[]
-}) {
+function HolidaysCard({ holidays }: { holidays: { id: string; date: string; name: string }[] }) {
   const create = useCreateHoliday()
   const remove = useDeleteHoliday()
   const toast = useToast()

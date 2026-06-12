@@ -30,7 +30,7 @@ app.route('/rosters', rosterRoutes)
 app.route('/fairness', fairnessRoutes)
 app.route('/audit', auditRoutes)
 app.route('/public-holidays', holidayRoutes)
-// adminRoutes guards everything it matches with requireRole(ADMIN) on '*',
+// adminRoutes matches broadly at the root (hospitals, users, duty-config, …),
 // so it must be mounted LAST — earlier mounts win for their own paths.
 app.route('/', adminRoutes)
 

@@ -1,5 +1,8 @@
 // Pure rule checks V1–V9 (listed in prisma/schema.prisma). Input is plain
 // data; output is a list of violations for the validation drawer.
+// CONSULTANT gets the consultant rules; every other layer is a pool on-call
+// roster (the cash rules V4–V5 are vacuous when there are no cash days).
+import type { RosterLayer } from '../../shared/types'
 import { addDays, dayOfWeek, daysInMonth, weekendPairs } from './dates'
 import type { SlotLike } from './fairness'
 
@@ -13,7 +16,7 @@ export interface Violation {
 }
 
 export interface RosterData {
-  layer: 'CONSULTANT' | 'SHO'
+  layer: RosterLayer
   month: string
   slots: SlotLike[]
 }
@@ -56,7 +59,10 @@ export function validateRoster(roster: RosterData, ctx: ValidationContext): Viol
     if (!prev || prev.staffId !== s.staffId) continue
     const consultantBlock = roster.layer === 'CONSULTANT' && s.isWeekendBlock && prev.isWeekendBlock
     const nonCashWeekendPair =
-      roster.layer === 'SHO' && dayOfWeek(s.date) === 0 && !s.isCash && !(prev as SlotLike).isCash
+      roster.layer !== 'CONSULTANT' &&
+      dayOfWeek(s.date) === 0 &&
+      !s.isCash &&
+      !(prev as SlotLike).isCash
     if (!consultantBlock && !nonCashWeekendPair) {
       violations.push({
         rule: 'V2',

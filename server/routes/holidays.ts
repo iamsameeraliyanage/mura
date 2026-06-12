@@ -1,5 +1,5 @@
 // Public holidays: anyone authenticated can read (calendar display);
-// only admins manage them (Settings page).
+// national data, so any department admin or above may manage them.
 import { Hono } from 'hono'
 import { HTTPException } from 'hono/http-exception'
 import { zValidator } from '@hono/zod-validator'
@@ -31,7 +31,7 @@ holidayRoutes.get('/', async (c) => {
 
 holidayRoutes.post(
   '/',
-  requireRole('ADMIN'),
+  requireRole('SUPER_ADMIN', 'HOSPITAL_ADMIN', 'DEPARTMENT_ADMIN'),
   zValidator('json', publicHolidayCreateSchema),
   async (c) => {
     const input = c.req.valid('json')
@@ -51,7 +51,7 @@ holidayRoutes.post(
   },
 )
 
-holidayRoutes.delete('/:id', requireRole('ADMIN'), async (c) => {
+holidayRoutes.delete('/:id', requireRole('SUPER_ADMIN', 'HOSPITAL_ADMIN', 'DEPARTMENT_ADMIN'), async (c) => {
   const id = c.req.param('id')
   const holiday = await db.publicHoliday.findUnique({ where: { id } })
   if (!holiday) throw new HTTPException(404, { message: 'Holiday not found' })

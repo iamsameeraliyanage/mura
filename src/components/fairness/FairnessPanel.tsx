@@ -1,6 +1,6 @@
 // Right-hand fairness sidebar: live month tallies with a bar vs pool average,
 // plus the cumulative table (consultant) / weekend-rotation card (SHO).
-import type { RosterLayer } from '../../../shared/types'
+import { LAYER_DEFAULT_POOL, type RosterLayer } from '../../../shared/types'
 import { useFairness, type Roster } from '../../api/rosters'
 import { Card, PenDot } from '../ui'
 import { addDays, dayOfWeek, monthLabel } from '../../lib/dates'
@@ -29,7 +29,7 @@ export function monthTally(
     if (slot.isPostCash) t.postCash += 1
     const date = slot.date.slice(0, 10)
     if (slot.isWeekendBlock && dayOfWeek(date) === 6) t.weekendBlocks += 1
-    if (layer === 'SHO' && dayOfWeek(date) === 6 && !slot.isCash) {
+    if (layer !== 'CONSULTANT' && dayOfWeek(date) === 6 && !slot.isCash) {
       const sun = byDate.get(addDays(date, 1))
       if (sun && sun.staffId === slot.staffId && !sun.isCash) t.weekendBlocks += 1
     }
@@ -54,29 +54,30 @@ function bar(value: number, avg: number) {
 export function FairnessPanel({
   unitId,
   layer,
+  poolKinds,
   roster,
   month,
 }: {
   unitId: string | undefined
   layer: RosterLayer
+  poolKinds?: string[]
   roster: Roster | null
   month: string
 }) {
   const { data } = useFairness(unitId, layer)
   const current = monthTally(roster, layer)
 
-  const staff = (data?.staff ?? []).filter((s) =>
-    layer === 'CONSULTANT' ? s.kind === 'CONSULTANT' : s.kind === 'SHO' || s.kind === 'RHO',
-  )
+  const kinds = poolKinds ?? LAYER_DEFAULT_POOL[layer]
+  const staff = (data?.staff ?? []).filter((s) => kinds.includes(s.kind))
   const active = staff.filter((s) => !s.activeUntil || s.activeUntil >= new Date().toISOString())
   const mainKey = layer === 'CONSULTANT' ? 'days' : 'onCalls'
   const avg = active.length
     ? active.reduce((sum, s) => sum + (current[s.id]?.[mainKey] ?? 0), 0) / active.length
     : 0
 
-  // Non-cash weekend sequence this month (SHO card)
+  // Non-cash weekend sequence this month (pool-roster card)
   const ncwBlocks: { dd: string; code: string; colorKey: string }[] = []
-  if (layer === 'SHO' && roster) {
+  if (layer !== 'CONSULTANT' && roster) {
     const byDate = new Map(roster.slots.map((s) => [s.date.slice(0, 10), s]))
     for (const s of roster.slots) {
       const date = s.date.slice(0, 10)
@@ -226,9 +227,11 @@ export function FairnessPanel({
         </div>
       </Card>
 
-      {layer === 'SHO' && ncwBlocks.length > 0 && (
+      {layer !== 'CONSULTANT' && ncwBlocks.length > 0 && (
         <Card className="p-4">
-          <div className="mr-label text-ink-3">Non-cash weekend rotation</div>
+          <div className="mr-label text-ink-3">
+            {layer === 'SHO' ? 'Non-cash weekend rotation' : 'Weekend rotation'}
+          </div>
           <div className="mt-2.5 flex flex-wrap items-center gap-1.5">
             {ncwBlocks.map((b, i) => (
               <span key={b.dd} className="flex items-center gap-1.5">

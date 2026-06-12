@@ -19,7 +19,14 @@ authRoutes.post('/login', zValidator('json', loginSchema), async (c) => {
     throw new HTTPException(401, { message: 'Invalid email or password' })
   }
 
-  const token = await signAuthToken({ sub: user.id, role: user.role, unitId: user.unitId })
+  const token = await signAuthToken({
+    sub: user.id,
+    role: user.role,
+    hospitalId: user.hospitalId,
+    departmentId: user.departmentId,
+    unitId: user.unitId,
+    rosterLayers: user.rosterLayers,
+  })
   setCookie(c, AUTH_COOKIE, token, {
     httpOnly: true,
     secure: isProduction(),
@@ -47,13 +54,21 @@ function publicUser(user: {
   email: string
   displayName: string
   role: string
+  hospitalId: string | null
+  departmentId: string | null
   unitId: string | null
+  rosterLayers: string[]
+  staffId: string | null
 }) {
   return {
     id: user.id,
     email: user.email,
     displayName: user.displayName,
     role: user.role,
+    hospitalId: user.hospitalId,
+    departmentId: user.departmentId,
     unitId: user.unitId,
+    rosterLayers: user.rosterLayers,
+    staffId: user.staffId,
   }
 }

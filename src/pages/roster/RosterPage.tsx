@@ -1,8 +1,14 @@
 import { useMemo, useState } from 'react'
+import { Navigate, useParams } from 'react-router-dom'
 import { format } from 'date-fns'
-import type { RosterLayer } from '../../../shared/types'
+import {
+  LAYER_DEFAULT_POOL,
+  LAYER_LABELS,
+  ROSTER_LAYERS,
+  type RosterLayer,
+} from '../../../shared/types'
 import { useMe } from '../../api/auth'
-import { useHolidays, useStaff, type Staff } from '../../api/admin'
+import { useDutyConfigs, useHolidays, useStaff, type Staff } from '../../api/admin'
 import {
   useAssignDay,
   useAssignSlot,
@@ -22,23 +28,26 @@ import { Button, Modal, PenChip, StatusBadge, useToast } from '../../components/
 import { addDays, addMonths, dayOfWeek, monthLabel, todayMonth } from '../../lib/dates'
 import { useUnitId } from '../../lib/useUnitId'
 
-const EDITOR_ROLE: Record<RosterLayer, string> = {
-  CONSULTANT: 'CONSULTANT_EDITOR',
-  SHO: 'SHO_EDITOR',
-}
-
-const EDITOR_NAME: Record<RosterLayer, string> = {
-  CONSULTANT: 'the consultant roster editor',
-  SHO: 'the SHO/RHO roster editor',
-}
-
 const pad = (n: number) => String(n).padStart(2, '0')
+
+/** Route element: /roster/:layer → the page for that roster type. */
+export function RosterRoute() {
+  const { layer } = useParams()
+  const upper = (layer ?? '').toUpperCase() as RosterLayer
+  if (!ROSTER_LAYERS.includes(upper)) return <Navigate to="/" replace />
+  return <RosterPage key={upper} layer={upper} />
+}
 
 export default function RosterPage({ layer }: { layer: RosterLayer }) {
   const { data: me } = useMe()
   const unitId = useUnitId()
   const toast = useToast()
   const [month, setMonth] = useState(todayMonth())
+
+  // Only the SHO/RHO roster is cash-linked to the consultant roster; other
+  // pool layers (nurses, HOs, …) are plain on-call rosters.
+  const isConsultant = layer === 'CONSULTANT'
+  const tracksCash = layer === 'SHO'
 
   const { data, isLoading } = useRoster(unitId, layer, month)
   // Neighbour months feed the tab status dots (cached by React Query).
@@ -47,8 +56,9 @@ export default function RosterPage({ layer }: { layer: RosterLayer }) {
   const prevRoster = useRoster(unitId, layer, prevMonth).data?.roster ?? null
   const nextRoster = useRoster(unitId, layer, nextMonth).data?.roster ?? null
   // The SHO roster unlocks only after the month's consultant roster publishes.
-  const consultant = useRoster(unitId, layer === 'SHO' ? 'CONSULTANT' : layer, month).data
-  const consultantRoster = layer === 'SHO' ? (consultant?.roster ?? null) : null
+  const consultant = useRoster(unitId, tracksCash ? 'CONSULTANT' : layer, month).data
+  const consultantRoster = tracksCash ? (consultant?.roster ?? null) : null
+  const { data: configs = [] } = useDutyConfigs(unitId)
 
   const generate = useGenerateRoster()
   const publish = usePublishRoster()
@@ -68,15 +78,20 @@ export default function RosterPage({ layer }: { layer: RosterLayer }) {
 
   const roster = data?.roster ?? null
   const violations = data?.violations ?? []
-  const canEdit = me?.role === 'ADMIN' || me?.role === EDITOR_ROLE[layer]
+  // Admins above the ward edit everything in it; a roster admin edits only
+  // the layers assigned to them. (The server re-checks all of this.)
+  const canEdit =
+    !!me &&
+    (me.role === 'ROSTER_ADMIN'
+      ? me.unitId === unitId && me.rosterLayers.includes(layer)
+      : true)
+  const poolKinds = useMemo(
+    () => configs.find((c) => c.layer === layer)?.poolKinds ?? LAYER_DEFAULT_POOL[layer],
+    [configs, layer],
+  )
   const pool = useMemo(
-    () =>
-      staff.filter(
-        (s) =>
-          (layer === 'CONSULTANT' ? s.kind === 'CONSULTANT' : s.kind === 'SHO' || s.kind === 'RHO') &&
-          !s.activeUntil,
-      ),
-    [staff, layer],
+    () => staff.filter((s) => poolKinds.includes(s.kind) && !s.activeUntil),
+    [staff, poolKinds],
   )
 
   const byDate = useMemo(
@@ -88,7 +103,7 @@ export default function RosterPage({ layer }: { layer: RosterLayer }) {
 
   // Revalidation: the consultant roster moved on after this SHO roster was built.
   const reval =
-    layer === 'SHO' &&
+    tracksCash &&
     roster &&
     consultantRoster &&
     roster.builtAgainstVersion != null &&
@@ -96,7 +111,7 @@ export default function RosterPage({ layer }: { layer: RosterLayer }) {
       ? conflictSlots
       : null
 
-  const locked = layer === 'SHO' && !roster && consultantRoster?.status !== 'PUBLISHED'
+  const locked = tracksCash && !roster && consultantRoster?.status !== 'PUBLISHED'
 
   const tallies = monthTally(roster, layer)
 
@@ -165,7 +180,7 @@ export default function RosterPage({ layer }: { layer: RosterLayer }) {
         onSuccess: () =>
           toast(
             `${format(new Date(a.date), 'MMM d')} ⇄ ${format(new Date(b.date), 'MMM d')} — ${
-              layer === 'SHO' ? 'flags stay with the day, ' : ''
+              tracksCash ? 'flags stay with the day, ' : ''
             }tallies updated`,
           ),
       },
@@ -175,7 +190,7 @@ export default function RosterPage({ layer }: { layer: RosterLayer }) {
   const onDropOnEmpty = (slot: Slot, date: string) => {
     if (!roster) return
     const dow = dayOfWeek(date)
-    if (layer === 'CONSULTANT' && (dow === 6 || dow === 0)) {
+    if (isConsultant && (dow === 6 || dow === 0)) {
       // Empty weekend day (the 5th-weekend "needs decision") → assign the block.
       const sat = dow === 6 ? date : addDays(date, -1)
       const sun = addDays(sat, 1)
@@ -214,18 +229,19 @@ export default function RosterPage({ layer }: { layer: RosterLayer }) {
   let metaLine = ''
   if (roster) {
     const cashDays = roster.slots.filter((s) => s.isCash).map((s) => Number(s.date.slice(8, 10)))
-    metaLine =
-      layer === 'SHO'
+    metaLine = isConsultant
+      ? `${roster.slots.length} days · ${
+          roster.slots.filter((s) => s.isWeekendBlock && dayOfWeek(s.date.slice(0, 10)) === 6)
+            .length
+        } weekend blocks`
+      : tracksCash
         ? `${roster.slots.length} days · cash locked to Pu: ${cashDays.join(', ') || '—'}`
-        : `${roster.slots.length} days · ${
-            roster.slots.filter((s) => s.isWeekendBlock && dayOfWeek(s.date.slice(0, 10)) === 6)
-              .length
-          } weekend blocks`
+        : `${roster.slots.length} days on-call`
     metaLine +=
       roster.status === 'PUBLISHED'
         ? ` · published ${roster.publishedAt ? format(new Date(roster.publishedAt), 'MMM d, HH:mm') : ''} · v${roster.version}`
         : ` · draft v${roster.version}${issueCount ? ` · ${issueCount} conflict${issueCount > 1 ? 's' : ''} to resolve` : ' · no conflicts'}`
-    if (layer === 'SHO' && roster.builtAgainstVersion != null)
+    if (tracksCash && roster.builtAgainstVersion != null)
       metaLine += ` · built against consultant v${roster.builtAgainstVersion}`
   }
 
@@ -234,7 +250,7 @@ export default function RosterPage({ layer }: { layer: RosterLayer }) {
       {!canEdit && (
         <div className="flex items-center gap-2 border-b border-grid bg-sunken px-4 py-2 text-[12.5px] text-ink-2 md:px-7 print:hidden">
           <Icon d={ICON_PATHS.lock} size={14} />
-          Read-only — this roster is edited by {EDITOR_NAME[layer]}.
+          Read-only — this roster is edited by its roster admin or the department admin.
         </div>
       )}
 
@@ -242,7 +258,7 @@ export default function RosterPage({ layer }: { layer: RosterLayer }) {
       <header className="flex flex-wrap items-end gap-4 px-4 pt-5 pb-4 md:px-7 md:pt-[26px] print:hidden">
         <div className="min-w-0 flex-1">
           <div className="mr-label mb-1.5 flex flex-wrap items-center gap-2.5 text-ink-2">
-            {layer === 'CONSULTANT' ? 'Consultant casualty roster' : 'SHO/RHO on-call roster'}
+            {LAYER_LABELS[layer]} roster
             {roster && <StatusBadge status={roster.status} version={roster.version} />}
           </div>
           <h1 className="font-display text-[32px] leading-[1.05] font-semibold tracking-tight md:text-[40px]">
@@ -373,9 +389,11 @@ export default function RosterPage({ layer }: { layer: RosterLayer }) {
                 {monthLabel(month)} has no roster yet
               </div>
               <p className="mx-auto mt-2.5 max-w-[480px] text-sm leading-normal text-ink-2">
-                {layer === 'CONSULTANT'
+                {isConsultant
                   ? 'The generator balances the month across the consultants — 7–8 days each, one weekend block each, no back-to-back duties — and checks the previous month’s tail.'
-                  : 'The generator balances on-call, cash and post-cash separately, locks cash days to Prof Unit’s casualty days, and carries the weekend rotation across months.'}
+                  : tracksCash
+                    ? 'The generator balances on-call, cash and post-cash separately, locks cash days to Prof Unit’s casualty days, and carries the weekend rotation across months.'
+                    : 'The generator gives everyone in the pool an even share of on-calls — no back-to-back days, one person per weekend — and carries the rotation across months.'}
               </p>
               {canEdit && unitId && (
                 <div className="mt-5">
@@ -418,7 +436,7 @@ export default function RosterPage({ layer }: { layer: RosterLayer }) {
                     ? 'Hover a person to spotlight their days · drag chips to swap · click a day for details'
                     : 'Hover a person to spotlight their days · click a day for details'}
                 </span>
-                {layer === 'SHO' && (
+                {tracksCash && (
                   <span className="inline-flex items-center gap-1.5 text-[11px] text-ink-2">
                     <span className="inline-flex h-[17px] items-center rounded bg-cash-bg px-1.5 text-[10px] font-semibold text-cash">
                       ◆ CASH
@@ -453,7 +471,13 @@ export default function RosterPage({ layer }: { layer: RosterLayer }) {
         </div>
 
         {roster && (
-          <FairnessPanel unitId={unitId} layer={layer} roster={roster} month={month} />
+          <FairnessPanel
+            unitId={unitId}
+            layer={layer}
+            poolKinds={poolKinds}
+            roster={roster}
+            month={month}
+          />
         )}
       </div>
 
@@ -531,7 +555,7 @@ export default function RosterPage({ layer }: { layer: RosterLayer }) {
                     onSuccess: (d) => {
                       setConfirmPublish(false)
                       toast(
-                        `${monthLabel(month)} ${layer === 'CONSULTANT' ? 'consultant' : 'SHO/RHO'} roster published — v${d.roster?.version ?? roster.version + 1}`,
+                        `${monthLabel(month)} ${LAYER_LABELS[layer]} roster published — v${d.roster?.version ?? roster.version + 1}`,
                       )
                     },
                   },

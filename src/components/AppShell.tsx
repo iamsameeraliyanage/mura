@@ -1,48 +1,76 @@
 import { NavLink, Outlet } from 'react-router-dom'
-import type { Role } from '../../shared/types'
+import { ROSTER_LAYERS, type Role, type RosterLayer } from '../../shared/types'
 import { useMe, useLogout } from '../api/auth'
+import { useDutyConfigs } from '../api/admin'
+import { useScope } from '../lib/scope'
 import { ICON_PATHS, Icon, LogoMark } from './icons'
 
-const NAV_ITEMS: {
+export const NAV_LAYER_LABELS: Record<RosterLayer, string> = {
+  CONSULTANT: 'Consultant roster',
+  SHO: 'SHO/RHO roster',
+  HO: 'HO roster',
+  MO: 'MO roster',
+  NURSE: 'Nurses roster',
+}
+
+interface NavItem {
   to: string
   label: string
   icon: string
   roles?: Role[]
   mobile?: boolean
-}[] = [
-  { to: '/', label: 'Dashboard', icon: ICON_PATHS.dashboard, mobile: true },
-  {
-    to: '/roster/consultant',
-    label: 'Consultant roster',
-    icon: ICON_PATHS.consultant,
-    roles: ['ADMIN', 'CONSULTANT_EDITOR'],
-    mobile: true,
-  },
-  {
-    to: '/roster/sho',
-    label: 'SHO/RHO roster',
-    icon: ICON_PATHS.sho,
-    roles: ['ADMIN', 'SHO_EDITOR'],
-    mobile: true,
-  },
-  { to: '/fairness', label: 'Fairness', icon: ICON_PATHS.fairness, mobile: true },
-  { to: '/admin/staff', label: 'Staff & config', icon: ICON_PATHS.staff, roles: ['ADMIN'] },
-  { to: '/unavailability', label: 'Unavailability', icon: ICON_PATHS.unavail },
-  { to: '/audit', label: 'Audit trail', icon: ICON_PATHS.audit },
-  { to: '/share', label: 'Share & export', icon: ICON_PATHS.share, mobile: true },
-]
+}
+
+const ADMIN_ROLES: Role[] = ['SUPER_ADMIN', 'HOSPITAL_ADMIN', 'DEPARTMENT_ADMIN']
 
 const ROLE_CAPTION: Record<Role, string> = {
-  ADMIN: 'Sees everything',
-  CONSULTANT_EDITOR: 'Consultant roster editor',
-  SHO_EDITOR: 'SHO/RHO roster editor',
+  SUPER_ADMIN: 'Sees every hospital',
+  HOSPITAL_ADMIN: 'Runs this hospital',
+  DEPARTMENT_ADMIN: 'Runs this department',
+  ROSTER_ADMIN: 'Roster admin',
 }
 
 export function AppShell() {
   const { data: me } = useMe()
   const logout = useLogout()
+  const { unit } = useScope()
+  const { data: configs = [] } = useDutyConfigs(unit?.id)
 
-  const items = NAV_ITEMS.filter((i) => !i.roles || (me && i.roles.includes(me.role)))
+  // One nav entry per roster type configured for the selected ward,
+  // consultant first. Everyone in scope can open them (read-only enforced
+  // per page); only their roster admin and the admins above can edit.
+  const rosterItems: NavItem[] = [...configs]
+    .sort((a, b) => ROSTER_LAYERS.indexOf(a.layer) - ROSTER_LAYERS.indexOf(b.layer))
+    .map((cfg) => ({
+      to: `/roster/${cfg.layer.toLowerCase()}`,
+      label: NAV_LAYER_LABELS[cfg.layer],
+      icon: cfg.layer === 'CONSULTANT' ? ICON_PATHS.consultant : ICON_PATHS.sho,
+      mobile: true,
+    }))
+
+  const allItems: NavItem[] = [
+    { to: '/', label: 'Dashboard', icon: ICON_PATHS.dashboard, mobile: true },
+    ...rosterItems,
+    { to: '/fairness', label: 'Fairness', icon: ICON_PATHS.fairness, mobile: true },
+    {
+      to: '/admin/organisation',
+      label: 'Organisation',
+      icon: ICON_PATHS.staff,
+      roles: ['SUPER_ADMIN', 'HOSPITAL_ADMIN'],
+    },
+    { to: '/admin/staff', label: 'Ward & staff', icon: ICON_PATHS.staff, roles: ADMIN_ROLES },
+    { to: '/unavailability', label: 'Unavailability', icon: ICON_PATHS.unavail },
+    { to: '/audit', label: 'Audit trail', icon: ICON_PATHS.audit },
+    { to: '/share', label: 'Share & export', icon: ICON_PATHS.share, mobile: true },
+  ]
+  const items = allItems.filter((i) => !i.roles || (me && i.roles.includes(me.role)))
+
+  const caption =
+    me?.role === 'ROSTER_ADMIN' && me.rosterLayers.length
+      ? `Runs ${me.rosterLayers.map((l) => NAV_LAYER_LABELS[l].replace(' roster', '')).join(', ')}`
+      : me
+        ? ROLE_CAPTION[me.role]
+        : ''
 
   return (
     <div className="flex min-h-dvh">
@@ -52,7 +80,7 @@ export function AppShell() {
           <LogoMark />
           <span className="font-display text-[19px] font-semibold tracking-tight">MediRoster</span>
         </div>
-        <div className="mr-label px-[18px] pb-4 pl-[54px] text-ink-3">LRH · Paediatrics</div>
+        <ScopeSwitcher />
         <nav className="flex flex-1 flex-col gap-0.5 overflow-y-auto px-2.5 py-1">
           {items.map((item) => (
             <NavLink
@@ -79,7 +107,7 @@ export function AppShell() {
               </span>
               <span className="min-w-0 flex-1">
                 <span className="block truncate text-[12.5px] font-semibold">{me.displayName}</span>
-                <span className="block text-[10.5px] text-ink-2">{ROLE_CAPTION[me.role]}</span>
+                <span className="block text-[10.5px] text-ink-2">{caption}</span>
               </span>
             </div>
             <button
@@ -116,6 +144,7 @@ export function AppShell() {
       <nav className="fixed inset-x-0 bottom-0 z-40 flex border-t border-grid bg-surface px-2 pt-1.5 pb-[max(env(safe-area-inset-bottom),10px)] md:hidden print:hidden">
         {items
           .filter((i) => i.mobile)
+          .slice(0, 5)
           .map((item) => (
             <NavLink
               key={item.to}
@@ -132,6 +161,63 @@ export function AppShell() {
             </NavLink>
           ))}
       </nav>
+    </div>
+  )
+}
+
+/** Hospital → department → ward picker. Levels with a single option render as
+ *  plain text; levels with choices become dropdowns (the super admin can roam
+ *  the whole tree, a department admin only their wards). */
+function ScopeSwitcher() {
+  const { hospitals, hospital, department, unit, setHospitalId, setDepartmentId, setUnitId } =
+    useScope()
+  const departments = hospital?.departments ?? []
+  const units = department?.units ?? []
+
+  const levels: {
+    key: string
+    options: { id: string; name: string }[]
+    value: string | undefined
+    onChange: (id: string) => void
+  }[] = [
+    { key: 'hospital', options: hospitals, value: hospital?.id, onChange: setHospitalId },
+    { key: 'department', options: departments, value: department?.id, onChange: setDepartmentId },
+    { key: 'ward', options: units, value: unit?.id, onChange: setUnitId },
+  ]
+
+  if (levels.every((l) => l.options.length <= 1)) {
+    return (
+      <div className="mr-label px-[18px] pb-4 pl-[54px] text-ink-3">
+        {[hospital?.name, department?.name].filter(Boolean).join(' · ') || '—'}
+      </div>
+    )
+  }
+
+  return (
+    <div className="flex flex-col gap-1 px-[18px] pt-1 pb-3.5">
+      {levels.map((level) =>
+        level.options.length > 1 ? (
+          <select
+            key={level.key}
+            aria-label={level.key}
+            value={level.value ?? ''}
+            onChange={(e) => level.onChange(e.target.value)}
+            className="h-7 w-full rounded border border-grid bg-surface px-1.5 text-[11.5px] font-medium text-ink-2 outline-none hover:border-grid-strong focus-visible:border-teal-600"
+          >
+            {level.options.map((o) => (
+              <option key={o.id} value={o.id}>
+                {o.name}
+              </option>
+            ))}
+          </select>
+        ) : (
+          level.options[0] && (
+            <div key={level.key} className="mr-label px-0.5 text-ink-3">
+              {level.options[0].name}
+            </div>
+          )
+        ),
+      )}
     </div>
   )
 }
