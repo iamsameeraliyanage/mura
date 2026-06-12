@@ -5,6 +5,7 @@ import { adminRoutes } from './routes/admin'
 import { staffRoutes } from './routes/staff'
 import { unavailabilityRoutes } from './routes/unavailability'
 import { auditRoutes, fairnessRoutes, rosterRoutes } from './routes/rosters'
+import { holidayRoutes } from './routes/holidays'
 import { db } from './db'
 
 export const app = new Hono().basePath('/api')
@@ -28,6 +29,7 @@ app.route('/unavailability', unavailabilityRoutes)
 app.route('/rosters', rosterRoutes)
 app.route('/fairness', fairnessRoutes)
 app.route('/audit', auditRoutes)
+app.route('/public-holidays', holidayRoutes)
 // adminRoutes guards everything it matches with requireRole(ADMIN) on '*',
 // so it must be mounted LAST — earlier mounts win for their own paths.
 app.route('/', adminRoutes)

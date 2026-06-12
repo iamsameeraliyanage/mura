@@ -2,7 +2,7 @@ import { useMemo, useRef, useState } from 'react'
 import { format } from 'date-fns'
 import type { RosterLayer } from '../../../shared/types'
 import { useMe } from '../../api/auth'
-import { useHospitals, useStaff } from '../../api/admin'
+import { useHolidays, useHospitals, useStaff } from '../../api/admin'
 import {
   useAssignDay,
   useAssignSlot,
@@ -59,6 +59,9 @@ export default function RosterPage({ layer }: { layer: RosterLayer }) {
       setSharing(false)
     }
   }
+
+  const { data: holidayList = [] } = useHolidays(month)
+  const holidays = Object.fromEntries(holidayList.map((h) => [h.date.slice(0, 10), h.name]))
 
   const roster = data?.roster ?? null
   const violations = data?.violations ?? []
@@ -209,6 +212,7 @@ export default function RosterPage({ layer }: { layer: RosterLayer }) {
                 month={month}
                 slots={roster.slots}
                 violations={violations}
+                holidays={holidays}
                 canEdit={canEdit}
                 onSwap={(a, b) =>
                   swap.mutate({ rosterId: roster.id, slotAId: a.id, slotBId: b.id })

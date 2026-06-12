@@ -176,6 +176,29 @@ export const useUpsertDutyConfig = () =>
     [['duty-config']],
   )
 
+export interface PublicHoliday {
+  id: string
+  date: string
+  name: string
+}
+
+export const useHolidays = (month?: string) =>
+  useQuery({
+    queryKey: ['public-holidays', month ?? 'all'],
+    queryFn: async () =>
+      (await api.get<PublicHoliday[]>('/public-holidays', { params: month ? { month } : {} }))
+        .data,
+  })
+
+export const useCreateHoliday = () =>
+  useInvalidating(
+    (input: { date: string; name: string }) => api.post('/public-holidays', input),
+    [['public-holidays']],
+  )
+
+export const useDeleteHoliday = () =>
+  useInvalidating((id: string) => api.delete(`/public-holidays/${id}`), [['public-holidays']])
+
 export const useCreateUnavailability = () =>
   useInvalidating(
     (input: { staffId: string; from: string; to: string; reason?: string }) =>

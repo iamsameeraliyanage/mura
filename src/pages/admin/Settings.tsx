@@ -9,10 +9,13 @@ import {
 } from '../../../shared/types'
 import {
   useCreateDepartment,
+  useCreateHoliday,
   useCreateHospital,
   useCreateUnit,
   useCreateUser,
+  useDeleteHoliday,
   useDutyConfigs,
+  useHolidays,
   useHospitals,
   useUpdateUser,
   useUpsertDutyConfig,
@@ -28,7 +31,75 @@ export default function SettingsPage() {
       <OrgSection />
       <UsersSection />
       <DutyConfigSection />
+      <HolidaySection />
     </div>
+  )
+}
+
+// ── Public holidays ──
+
+function HolidaySection() {
+  const { data: holidays = [] } = useHolidays()
+  const create = useCreateHoliday()
+  const remove = useDeleteHoliday()
+  const [date, setDate] = useState('')
+  const [name, setName] = useState('')
+
+  const add = () =>
+    create.mutate(
+      { date, name },
+      {
+        onSuccess: () => {
+          setDate('')
+          setName('')
+        },
+      },
+    )
+
+  return (
+    <section>
+      <h2 className="text-lg font-semibold">Public holidays</h2>
+      <p className="mt-1 text-sm text-ink-soft">
+        Shown as a highlight + label on the roster calendars. No effect on duty rules.
+      </p>
+      <div className="mt-3 flex flex-wrap items-end gap-2">
+        <Field label="Date">
+          <Input type="date" value={date} onChange={(e) => setDate(e.target.value)} />
+        </Field>
+        <Field label="Name">
+          <Input
+            value={name}
+            placeholder="e.g. Vesak Full Moon Poya Day"
+            onChange={(e) => setName(e.target.value)}
+            className="min-w-64"
+          />
+        </Field>
+        <Button onClick={add} disabled={!date || !name || create.isPending}>
+          Add
+        </Button>
+      </div>
+      {holidays.length > 0 && (
+        <div className="mt-3 overflow-x-auto rounded-lg border border-grid bg-sheet">
+          <table className="w-full text-left text-sm">
+            <tbody>
+              {holidays.map((h) => (
+                <tr key={h.id} className="border-b border-grid last:border-0">
+                  <td className="px-4 py-2 font-mono text-xs whitespace-nowrap">
+                    {h.date.slice(0, 10)}
+                  </td>
+                  <td className="w-full px-4 py-2">{h.name}</td>
+                  <td className="px-4 py-2 text-right">
+                    <Button variant="ghost" onClick={() => remove.mutate(h.id)}>
+                      Remove
+                    </Button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+    </section>
   )
 }
 

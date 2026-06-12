@@ -81,6 +81,13 @@ export const dutyConfigUpsertSchema = z.object({
   poolKinds: z.array(staffKindSchema).min(1),
 })
 
+// ── Public holidays ──
+
+export const publicHolidayCreateSchema = z.object({
+  date: dateStringSchema,
+  name: z.string().min(1).max(80),
+})
+
 // ── Unavailability ──
 
 export const unavailabilityCreateSchema = z

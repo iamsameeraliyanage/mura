@@ -234,6 +234,14 @@ model WeekendRotationState {
   @@unique([unitId, layer])
 }
 
+// Public holidays — display-only on the calendar (docs/01: "lighter work
+// unless casualty, no special roster rule"). National, so not unit-scoped.
+model PublicHoliday {
+  id   String   @id @default(cuid())
+  date DateTime @unique @db.Date
+  name String // "Vesak Full Moon Poya Day"
+}
+
 // Audit trail — required from day one. Every mutation writes a row.
 enum AuditAction {
   CREATE

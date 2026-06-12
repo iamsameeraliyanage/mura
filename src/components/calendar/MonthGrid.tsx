@@ -22,6 +22,8 @@ export interface MonthGridProps {
   month: string
   slots: Slot[]
   violations: Violation[]
+  /** date (YYYY-MM-DD) → holiday name */
+  holidays?: Record<string, string>
   canEdit: boolean
   onSwap: (a: Slot, b: Slot) => void
   onDropOnEmpty: (slot: Slot, date: string) => void
@@ -81,6 +83,7 @@ export function MonthGrid(props: MonthGridProps) {
                   date={date}
                   slot={byDate.get(date) ?? null}
                   hasViolation={violationDates.has(date)}
+                  holiday={props.holidays?.[date]}
                   canEdit={props.canEdit}
                   onClick={() => props.onDayClick(date, byDate.get(date) ?? null)}
                 />
@@ -103,18 +106,29 @@ function DayCell({
   date,
   slot,
   hasViolation,
+  holiday,
   canEdit,
   onClick,
 }: {
   date: string
   slot: Slot | null
   hasViolation: boolean
+  holiday?: string
   canEdit: boolean
   onClick: () => void
 }) {
   const { setNodeRef, isOver } = useDroppable({ id: date, disabled: !canEdit })
   const weekend = dayOfWeek(date) === 0 || dayOfWeek(date) === 6
   const dayNum = Number(date.slice(8))
+
+  // Cell tint priority: casualty (cash) day > public holiday > weekend
+  const tint = slot?.isCash
+    ? 'bg-cash-bg'
+    : holiday
+      ? 'bg-holiday-bg'
+      : weekend
+        ? 'bg-weekend-bg'
+        : 'bg-sheet'
 
   return (
     <div
@@ -129,13 +143,25 @@ function DayCell({
           onClick()
         }
       }}
-      className={`relative min-h-14 border-r border-b border-grid p-1 md:min-h-18 md:p-1.5 ${
-        weekend ? 'bg-weekend-bg' : 'bg-sheet'
-      } ${isOver ? 'ring-2 ring-scrub-500 ring-inset' : ''} ${
-        hasViolation || slot?.conflictFlag ? 'ring-2 ring-danger ring-inset' : ''
-      } ${canEdit ? 'cursor-pointer focus-visible:ring-2 focus-visible:ring-scrub-500 focus-visible:outline-none' : ''}`}
+      className={`relative min-h-14 border-r border-b border-grid p-1 md:min-h-18 md:p-1.5 ${tint} ${
+        isOver ? 'ring-2 ring-scrub-500 ring-inset' : ''
+      } ${hasViolation || slot?.conflictFlag ? 'ring-2 ring-danger ring-inset' : ''} ${
+        canEdit
+          ? 'cursor-pointer focus-visible:ring-2 focus-visible:ring-scrub-500 focus-visible:outline-none'
+          : ''
+      }`}
     >
-      <span className="font-mono text-xs text-ink-soft">{dayNum}</span>
+      <span className="flex items-start justify-between gap-1">
+        <span className="font-mono text-xs text-ink-soft">{dayNum}</span>
+        {holiday && (
+          <span
+            title={holiday}
+            className="max-w-full truncate rounded bg-danger-bg px-1 text-[9px] leading-4 font-medium text-danger"
+          >
+            PH · {holiday}
+          </span>
+        )}
+      </span>
       <div className="mt-0.5 flex flex-col items-center gap-0.5">
         {slot ? (
           <>
