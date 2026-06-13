@@ -1,14 +1,15 @@
-// Roster CRUD, generation, swaps, publish (docs/02 §API). Any authenticated
-// user may VIEW rosters; mutations require the layer's editor role (or admin).
+// Roster CRUD, generation, swaps, publish (docs/02 §API). Viewing is scoped to
+// the caller's wards; mutations require edit rights on that ward+layer
+// (department admin or above, or the roster admin assigned to the layer).
 import { Hono, type Context } from 'hono'
 import { HTTPException } from 'hono/http-exception'
 import { z } from 'zod'
 import { zValidator } from '@hono/zod-validator'
-import type { Roster, RosterLayer } from '@prisma/client'
+import type { Roster } from '@prisma/client'
 import { rosterLayerSchema, rosterMonthSchema, dateStringSchema } from '../../shared/schemas'
 import { db } from '../db'
 import { writeAudit } from '../lib/audit'
-import { assertScope, requireAuth, type AuthEnv, type AuthUser } from '../middleware/auth'
+import { assertRosterEdit, assertUnitView, requireAuth, type AuthEnv } from '../middleware/auth'
 import { generateConsultantRoster } from '../services/generator/consultant'
 import { generateShoRoster } from '../services/generator/sho'
 import { tallyConsultant, tallySho, mergeTallies } from '../services/fairness'
@@ -28,14 +29,6 @@ import { addDays } from '../services/dates'
 
 export const rosterRoutes = new Hono<AuthEnv>()
 rosterRoutes.use('*', requireAuth)
-
-function assertLayerEditor(user: AuthUser, layer: RosterLayer) {
-  if (user.role === 'ADMIN') return
-  const required = layer === 'CONSULTANT' ? 'CONSULTANT_EDITOR' : 'SHO_EDITOR'
-  if (user.role !== required) {
-    throw new HTTPException(403, { message: `Requires ${required} role` })
-  }
-}
 
 const slotInclude = {
   slots: {
@@ -74,6 +67,7 @@ rosterRoutes.get('/', async (c) => {
     .safeParse(c.req.query())
   if (!query.success) throw new HTTPException(400, { message: 'unitId, layer, month required' })
   const { unitId, layer, month } = query.data
+  await assertUnitView(c, unitId)
 
   const roster = await db.roster.findUnique({
     where: { unitId_layer_month: { unitId, layer, month } },
@@ -84,10 +78,15 @@ rosterRoutes.get('/', async (c) => {
   return c.json({ roster, violations })
 })
 
-rosterRoutes.get('/:id', async (c) => c.json(await rosterWithReport(c.req.param('id'))))
+rosterRoutes.get('/:id', async (c) => {
+  const report = await rosterWithReport(c.req.param('id'))
+  await assertUnitView(c, report.roster.unitId)
+  return c.json(report)
+})
 
 rosterRoutes.get('/:id/validation', async (c) => {
-  const { violations } = await rosterWithReport(c.req.param('id'))
+  const { roster, violations } = await rosterWithReport(c.req.param('id'))
+  await assertUnitView(c, roster.unitId)
   return c.json(violations)
 })
 
@@ -102,8 +101,7 @@ const generateSchema = z.object({
 rosterRoutes.post('/generate', zValidator('json', generateSchema), async (c) => {
   const { unitId, layer, month } = c.req.valid('json')
   const user = c.get('user')
-  assertLayerEditor(user, layer)
-  assertScope(c, unitId)
+  await assertRosterEdit(c, unitId, layer)
 
   const existing = await db.roster.findUnique({
     where: { unitId_layer_month: { unitId, layer, month } },
@@ -143,40 +141,51 @@ rosterRoutes.post('/generate', zValidator('json', generateSchema), async (c) => 
     isPostCash?: boolean
   }[]
 
-  if (layer === 'CONSULTANT') {
-    const result = generateConsultantRoster({
-      month,
-      consultants: activePool.map((p) => ({ id: p.id })),
-      unavailable,
-      previousTail,
-      cumulative: tallyConsultant(priorSlots),
-    })
-    assignments = result.assignments
-  } else {
-    const puDays = await getPuDays(unitId, month)
-    if (!puDays) {
-      throw new HTTPException(409, {
-        message: 'The consultant roster for this month must be published first',
+  try {
+    if (layer === 'CONSULTANT') {
+      const result = generateConsultantRoster({
+        month,
+        consultants: activePool.map((p) => ({ id: p.id })),
+        unavailable,
+        previousTail,
+        cumulative: tallyConsultant(priorSlots),
       })
+      assignments = result.assignments
+    } else {
+      // Every non-consultant layer is a pool on-call roster. Only the SHO/RHO
+      // roster is cash-linked to the published consultant roster (docs/01 §4).
+      const puDays = layer === 'SHO' ? await getPuDays(unitId, month) : []
+      if (!puDays) {
+        throw new HTTPException(409, {
+          message: 'The consultant roster for this month must be published first',
+        })
+      }
+      const rotation = await db.weekendRotationState.findUnique({
+        where: { unitId_layer: { unitId, layer } },
+      })
+      const result = generateShoRoster({
+        month,
+        pool: activePool.map((p) => ({
+          id: p.id,
+          activeFrom: toDateString(p.activeFrom),
+          activeUntil: p.activeUntil ? toDateString(p.activeUntil) : null,
+        })),
+        puDays,
+        unavailable,
+        previousTail,
+        cumulative: tallySho(priorSlots),
+        rotationOrder: rotation?.rotationOrder ?? activePool.map((p) => p.id),
+        lastNonCashWeekendId: rotation?.lastAssignedId ?? null,
+      })
+      assignments = result.assignments
     }
-    const rotation = await db.weekendRotationState.findUnique({
-      where: { unitId_layer: { unitId, layer } },
+  } catch (err) {
+    if (err instanceof HTTPException) throw err
+    // The generators search under hard rules (V1–V9); an exhausted search is a
+    // data problem (pool too small, too much unavailability) — not a crash.
+    throw new HTTPException(422, {
+      message: `Could not build a valid roster: ${err instanceof Error ? err.message : err}. The pool may be too small (3+ people needed) or unavailability too tight — adjust and regenerate.`,
     })
-    const result = generateShoRoster({
-      month,
-      pool: activePool.map((p) => ({
-        id: p.id,
-        activeFrom: toDateString(p.activeFrom),
-        activeUntil: p.activeUntil ? toDateString(p.activeUntil) : null,
-      })),
-      puDays,
-      unavailable,
-      previousTail,
-      cumulative: tallySho(priorSlots),
-      rotationOrder: rotation?.rotationOrder ?? activePool.map((p) => p.id),
-      lastNonCashWeekendId: rotation?.lastAssignedId ?? null,
-    })
-    assignments = result.assignments
   }
 
   const times = await getShiftTimes(unitId, layer)
@@ -237,9 +246,7 @@ const assignSchema = z.object({
 async function loadEditableRoster(c: Context<AuthEnv>) {
   const roster = await db.roster.findUnique({ where: { id: c.req.param('id') } })
   if (!roster) throw new HTTPException(404, { message: 'Roster not found' })
-  const user = c.get('user')
-  assertLayerEditor(user, roster.layer)
-  assertScope(c, roster.unitId)
+  await assertRosterEdit(c, roster.unitId, roster.layer)
   return roster
 }
 
@@ -406,8 +413,9 @@ rosterRoutes.post('/:id/publish', async (c) => {
     await revalidateShoAgainstConsultant(updated.unitId, updated.month, updated.version)
   }
 
-  // SHO publish: persist the non-cash weekend rotation pointer for next month.
-  if (roster.layer === 'SHO') {
+  // Pool-roster publish: persist the non-cash weekend rotation pointer so the
+  // rotation carries into next month (per layer — SHO, nurses, HOs, …).
+  if (roster.layer !== 'CONSULTANT') {
     await updateRotationState(updated.unitId, updated.id)
   }
 
@@ -466,9 +474,15 @@ async function updateRotationState(unitId: string, rosterId: string) {
     if (sun && sun.staffId === slot.staffId && !sun.isCash) last = slot.staffId
   }
   if (last) {
-    await db.weekendRotationState.updateMany({
-      where: { unitId, layer: 'SHO' },
-      data: { lastAssignedId: last },
+    await db.weekendRotationState.upsert({
+      where: { unitId_layer: { unitId, layer: roster.layer } },
+      update: { lastAssignedId: last },
+      create: {
+        unitId,
+        layer: roster.layer,
+        rotationOrder: [...new Set(roster.slots.map((s) => s.staffId))],
+        lastAssignedId: last,
+      },
     })
   }
 }
@@ -489,6 +503,7 @@ fairnessRoutes.get('/', async (c) => {
     .safeParse(c.req.query())
   if (!query.success) throw new HTTPException(400, { message: 'unitId and layer required' })
   const { unitId, layer, from, to } = query.data
+  await assertUnitView(c, unitId)
 
   const rosters = await db.roster.findMany({
     where: {

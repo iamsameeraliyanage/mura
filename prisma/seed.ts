@@ -15,9 +15,17 @@ async function main() {
   }
 
   // ── Org hierarchy ──
+  // Rename the placeholder hospital from earlier seeds; create LRH otherwise.
+  const placeholder = await prisma.hospital.findFirst({ where: { name: 'Base Hospital' } })
+  if (placeholder) {
+    await prisma.hospital.update({
+      where: { id: placeholder.id },
+      data: { name: 'Lady Ridgeway Hospital', city: 'Colombo' },
+    })
+  }
   const hospital =
-    (await prisma.hospital.findFirst({ where: { name: 'Base Hospital' } })) ??
-    (await prisma.hospital.create({ data: { name: 'Base Hospital' } }))
+    (await prisma.hospital.findFirst({ where: { name: 'Lady Ridgeway Hospital' } })) ??
+    (await prisma.hospital.create({ data: { name: 'Lady Ridgeway Hospital', city: 'Colombo' } }))
 
   const department = await prisma.department.upsert({
     where: { hospitalId_name: { hospitalId: hospital.id, name: 'Paediatrics' } },
@@ -31,41 +39,44 @@ async function main() {
     create: { departmentId: department.id, name: 'Prof Unit' },
   })
 
-  // ── Admin user ──
+  // ── Super admin ──
   await prisma.user.upsert({
     where: { email: adminEmail },
-    update: {},
+    update: { role: 'SUPER_ADMIN' },
     create: {
       email: adminEmail,
       passwordHash: await bcrypt.hash(adminPassword, 10),
       displayName: 'Admin',
-      role: 'ADMIN',
+      role: 'SUPER_ADMIN',
     },
   })
 
-  // ── Editor users (E1 = consultant roster, E2 = SHO roster; docs/01 §2) ──
-  // Placeholder emails — update via the admin panel with real addresses.
+  // ── Hierarchy demo accounts (docs/01 §2: E1 = Wasana, E2 = Ruwanda) ──
+  // Wasana runs Paediatrics (department admin); Ruwanda runs the SHO/RHO
+  // roster of Prof Unit (roster admin). Placeholder emails — update via the
+  // admin panel with real addresses.
   const editorPassword = await bcrypt.hash('mura-editor-2026', 10)
   await prisma.user.upsert({
     where: { email: 'wasana@mura.local' },
-    update: {},
+    update: { role: 'DEPARTMENT_ADMIN', departmentId: department.id, unitId: null },
     create: {
       email: 'wasana@mura.local',
       passwordHash: editorPassword,
       displayName: 'Dr. Wasana',
-      role: 'CONSULTANT_EDITOR',
-      unitId: unit.id,
+      role: 'DEPARTMENT_ADMIN',
+      departmentId: department.id,
     },
   })
   await prisma.user.upsert({
     where: { email: 'ruwanda@mura.local' },
-    update: {},
+    update: { role: 'ROSTER_ADMIN', unitId: unit.id, rosterLayers: ['SHO'] },
     create: {
       email: 'ruwanda@mura.local',
       passwordHash: editorPassword,
       displayName: 'Dr. Ruwanda',
-      role: 'SHO_EDITOR',
+      role: 'ROSTER_ADMIN',
       unitId: unit.id,
+      rosterLayers: ['SHO'],
     },
   })
 
@@ -208,6 +219,13 @@ async function main() {
       rotationOrder: [byName('Ruwanda'), byName('Mekala'), byName('Sulakshana'), byName('Udara')],
       lastAssignedId: byName('Udara'),
     },
+  })
+
+  // Ruwanda's login is the SHO staff member of the same name — link them so
+  // the UI can show "roster admin · also in the pool".
+  await prisma.user.update({
+    where: { email: 'ruwanda@mura.local' },
+    data: { staffId: byName('Ruwanda') },
   })
 
   console.log('Seed complete:')

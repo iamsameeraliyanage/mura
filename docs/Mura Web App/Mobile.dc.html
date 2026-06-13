@@ -1,0 +1,283 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="stylesheet" href="_ds/mediroster-design-system-2b97303f-2ccc-4ec2-b021-43f0d3671db6/tokens/fonts.css">
+  <link rel="stylesheet" href="_ds/mediroster-design-system-2b97303f-2ccc-4ec2-b021-43f0d3671db6/tokens/colors.css">
+  <link rel="stylesheet" href="_ds/mediroster-design-system-2b97303f-2ccc-4ec2-b021-43f0d3671db6/tokens/pen-colors.css">
+  <link rel="stylesheet" href="_ds/mediroster-design-system-2b97303f-2ccc-4ec2-b021-43f0d3671db6/tokens/typography.css">
+  <link rel="stylesheet" href="_ds/mediroster-design-system-2b97303f-2ccc-4ec2-b021-43f0d3671db6/tokens/spacing.css">
+  <link rel="stylesheet" href="_ds/mediroster-design-system-2b97303f-2ccc-4ec2-b021-43f0d3671db6/tokens/base.css">
+  <link rel="stylesheet" href="_ds/mediroster-design-system-2b97303f-2ccc-4ec2-b021-43f0d3671db6/styles.css">
+  <script src="_ds/mediroster-design-system-2b97303f-2ccc-4ec2-b021-43f0d3671db6/_ds_bundle.js"></script>
+  <style>
+    html, body { margin: 0; padding: 0; background: #fafbfc; }
+  </style>
+</helmet>
+
+<div data-screen-label="Mobile preview" style="min-height: 100vh; background: var(--paper); font-family: var(--font-ui); color: var(--ink); display: flex; align-items: center; justify-content: center; gap: 48px; padding: 40px 24px; box-sizing: border-box;">
+
+  <!-- Context card -->
+  <div style="width: 270px;">
+    <a href="Dashboard.dc.html" style="display: inline-flex; align-items: center; gap: 8px; text-decoration: none; color: var(--ink-secondary); font-size: 12.5px; font-weight: 600; margin-bottom: 18px;" style-hover="color: var(--teal-700);">← Back to the app</a>
+    <div style="font-size: 11px; font-weight: 600; letter-spacing: 0.04em; color: var(--ink-secondary);">MOBILE · 360 PX</div>
+    <div style="font-family: var(--font-display); font-weight: 600; font-size: 30px; line-height: 1.15; margin-top: 6px;">Checking your day on a phone</div>
+    <div style="font-size: 13.5px; line-height: 1.55; color: var(--ink-secondary); margin-top: 12px;">The #1 real-world use. Chips show short codes only; tapping a day opens the detail sheet with hours, flags and the 2nd on-call.</div>
+    <div style="margin-top: 16px; display: flex; flex-direction: column; gap: 8px; font-size: 12.5px; color: var(--ink);">
+      <span>· Same pen colors, same grid — readable at arm's length</span>
+      <span>· Bottom tabs replace the sidebar</span>
+      <span>· Editing stays on desktop; phones are for checking</span>
+    </div>
+  </div>
+
+  <!-- Device -->
+  <x-import component="IOSDevice" from="./ios-frame.jsx" title="" hint-size="390px,820px">
+    <div style="height: 100%; display: flex; flex-direction: column; background: var(--paper); font-family: var(--font-ui); color: var(--ink); position: relative; overflow: hidden;">
+
+      <!-- App bar -->
+      <div style="display: flex; align-items: center; gap: 8px; padding: 10px 14px 8px 14px; background: var(--surface); border-bottom: 1px solid var(--grid-line);">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--teal-600)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M3 6a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v13a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
+          <path d="M3 9.5h18"></path><path d="M8 2v4"></path><path d="M16 2v4"></path>
+        </svg>
+        <span style="font-family: var(--font-display); font-weight: 600; font-size: 17px; white-space: nowrap;">{{ mobileTitle }}</span>
+        <span style="flex: 1;"></span>
+        <span style="display: inline-flex; align-items: center; gap: 5px; height: 20px; padding: 0 8px; font-size: 9.5px; font-weight: 600; letter-spacing: 0.04em; color: var(--published-ink); background: var(--published-bg); border-radius: 4px;">
+          <span style="width: 5px; height: 5px; border-radius: 999px; background: var(--published-ink);"></span>
+          PUBLISHED v2
+        </span>
+      </div>
+
+      <!-- Tab: Roster -->
+      <sc-if value="{{ tabRoster }}" hint-placeholder-val="{{ true }}">
+        <div style="flex: 1; overflow-y: auto; padding: 12px 10px 90px 10px;">
+          <div style="background: var(--surface); border: 1px solid var(--grid-line); border-radius: 8px; overflow: hidden;">
+            <div style="display: grid; grid-template-columns: repeat(7, 1fr); border-bottom: 1px solid var(--grid-line);">
+              <div style="padding: 6px 0; text-align: center; font-size: 9.5px; font-weight: 600; color: var(--ink-tertiary); border-right: 1px solid var(--grid-line);">M</div>
+              <div style="padding: 6px 0; text-align: center; font-size: 9.5px; font-weight: 600; color: var(--ink-tertiary); border-right: 1px solid var(--grid-line);">T</div>
+              <div style="padding: 6px 0; text-align: center; font-size: 9.5px; font-weight: 600; color: var(--ink-tertiary); border-right: 1px solid var(--grid-line);">W</div>
+              <div style="padding: 6px 0; text-align: center; font-size: 9.5px; font-weight: 600; color: var(--ink-tertiary); border-right: 1px solid var(--grid-line);">T</div>
+              <div style="padding: 6px 0; text-align: center; font-size: 9.5px; font-weight: 600; color: var(--ink-tertiary); border-right: 1px solid var(--grid-line);">F</div>
+              <div style="padding: 6px 0; text-align: center; font-size: 9.5px; font-weight: 600; color: var(--ink-secondary); background: var(--weekend-bg); border-right: 1px solid var(--grid-line);">S</div>
+              <div style="padding: 6px 0; text-align: center; font-size: 9.5px; font-weight: 600; color: var(--ink-secondary); background: var(--weekend-bg);">S</div>
+            </div>
+            <div style="display: grid; grid-template-columns: repeat(7, 1fr);">
+              <sc-for list="{{ cells }}" as="c" hint-placeholder-count="35">
+                <div data-day="{{ c.day }}" onClick="{{ dayTap }}" style="min-height: 56px; padding: 4px 3px; border-right: 1px solid var(--grid-line); border-bottom: 1px solid var(--grid-line); background: {{ c.bg }}; box-shadow: {{ c.ring }}; display: flex; flex-direction: column; align-items: center; cursor: pointer;">
+                  <sc-if value="{{ c.real }}" hint-placeholder-val="{{ true }}">
+                    <span style="font-family: var(--font-mono); font-size: 9.5px; font-weight: {{ c.ddWeight }}; color: {{ c.ddColor }}; align-self: flex-start; padding-left: 2px;">{{ c.dd }}</span>
+                    <span style="flex: 1; display: flex; align-items: center;">
+                      <span style="display: inline-flex; align-items: center; justify-content: center; min-width: 24px; height: 21px; padding: 0 5px; font-size: 11.5px; font-weight: 600; color: {{ c.ink }}; background: {{ c.chipBg }}; border-radius: 5px;">{{ c.code }}</span>
+                    </span>
+                    <span style="height: 11px; font-size: 8.5px; font-weight: 700; color: {{ c.flagInk }}; line-height: 1;">{{ c.flag }}</span>
+                  </sc-if>
+                </div>
+              </sc-for>
+            </div>
+          </div>
+          <div style="display: flex; gap: 9px; margin-top: 10px; padding: 0 2px; flex-wrap: wrap;">
+            <sc-for list="{{ legend }}" as="l" hint-placeholder-count="4">
+              <span style="display: inline-flex; align-items: center; gap: 5px; font-size: 10.5px; color: var(--ink-secondary);">
+                <span style="width: 8px; height: 8px; border-radius: 999px; background: {{ l.dot }};"></span>
+                <strong style="font-weight: 600; color: var(--ink);">{{ l.code }}</strong> {{ l.name }}
+              </span>
+            </sc-for>
+          </div>
+        </div>
+      </sc-if>
+
+      <!-- Tab: Fairness -->
+      <sc-if value="{{ tabFairness }}" hint-placeholder-val="{{ false }}">
+        <div style="flex: 1; overflow-y: auto; padding: 12px 12px 90px 12px;">
+          <div style="background: var(--surface); border: 1px solid var(--grid-line); border-radius: 8px; padding: 14px;">
+            <div style="display: flex; gap: 7px; justify-content: flex-end; padding-bottom: 6px; border-bottom: 1px solid var(--grid-line); font-size: 9px; font-weight: 600; letter-spacing: 0.04em; color: var(--ink-tertiary);">
+              <span style="width: 24px; text-align: right;">OC</span>
+              <span style="width: 22px; text-align: right;">◆</span>
+              <span style="width: 22px; text-align: right;">■</span>
+            </div>
+            <sc-for list="{{ fairRows }}" as="f" hint-placeholder-count="4">
+              <div style="display: flex; align-items: center; gap: 9px; padding: 10px 0; border-bottom: 1px solid var(--grid-line);">
+                <span style="width: 9px; height: 9px; border-radius: 999px; background: {{ f.dot }}; flex-shrink: 0;"></span>
+                <div style="flex: 1; min-width: 0;">
+                  <div style="font-size: 12.5px; font-weight: 500;">{{ f.name }}</div>
+                  <div style="height: 4px; background: var(--bar-track); border-radius: 2px; margin-top: 5px; overflow: hidden;">
+                    <div style="width: {{ f.pct }}; height: 100%; background: {{ f.barColor }}; border-radius: 2px;"></div>
+                  </div>
+                </div>
+                <span style="font-family: var(--font-mono); font-size: 12px; width: 24px; text-align: right;">{{ f.oc }}</span>
+                <span style="font-family: var(--font-mono); font-size: 12px; width: 22px; text-align: right; color: var(--cash-ink);">{{ f.cash }}</span>
+                <span style="font-family: var(--font-mono); font-size: 12px; width: 22px; text-align: right; color: var(--postcash-ink);">{{ f.pc }}</span>
+              </div>
+            </sc-for>
+            <div style="margin-top: 10px; font-size: 11px; line-height: 1.5; color: var(--ink-secondary);">June tallies. Counts are balanced separately for on-call, cash and post-cash.</div>
+          </div>
+        </div>
+      </sc-if>
+
+      <!-- Day sheet -->
+      <sc-if value="{{ sheetShow }}" hint-placeholder-val="{{ false }}">
+        <div onClick="{{ sheetClose }}" style="position: absolute; inset: 0; background: rgba(27,39,51,0.18); z-index: 20;"></div>
+        <div style="position: absolute; left: 0; right: 0; bottom: 0; z-index: 21; background: var(--surface); border-top: 1px solid var(--grid-line); border-radius: 14px 14px 0 0; box-shadow: var(--shadow-lift); padding: 10px 18px 26px 18px;">
+          <div style="width: 36px; height: 4px; border-radius: 2px; background: var(--grid-line-strong); margin: 0 auto 12px auto;"></div>
+          <div style="font-family: var(--font-mono); font-size: 11px; color: var(--ink-secondary);">{{ sheetDate }}</div>
+          <div style="display: flex; align-items: center; gap: 10px; margin-top: 9px;">
+            <span style="min-width: 36px; height: 30px; padding: 0 10px; border-radius: 6px; display: inline-flex; align-items: center; justify-content: center; font-size: 15px; font-weight: 600; color: {{ sheetInk }}; background: {{ sheetBg }};">{{ sheetCode }}</span>
+            <div>
+              <div style="font-size: 15px; font-weight: 600;">{{ sheetName }}</div>
+              <div style="font-family: var(--font-mono); font-size: 11px; color: var(--ink-secondary);">On-call · 8:00 am → next day 4:00 pm</div>
+            </div>
+          </div>
+          <sc-if value="{{ sheetFlagsShow }}" hint-placeholder-val="{{ false }}">
+            <div style="margin-top: 11px; padding: 9px 11px; background: var(--surface-sunken); border-radius: 6px; font-size: 12px; line-height: 1.5; color: var(--ink);">{{ sheetFlags }}</div>
+          </sc-if>
+          <sc-if value="{{ sheetSecondShow }}" hint-placeholder-val="{{ false }}">
+            <div style="display: flex; align-items: center; gap: 7px; margin-top: 9px; padding: 9px 11px; background: var(--surface-sunken); border-radius: 6px;">
+              <span style="font-size: 10.5px; font-weight: 600; color: var(--ink-secondary);">2ND ON-CALL · TRANSFER</span>
+              <span style="flex: 1;"></span>
+              <span style="min-width: 24px; height: 20px; padding: 0 6px; border-radius: 6px; display: inline-flex; align-items: center; justify-content: center; font-size: 11.5px; font-weight: 600; color: {{ sheetSecondInk }}; background: {{ sheetSecondBg }};">{{ sheetSecondCode }}</span>
+            </div>
+          </sc-if>
+        </div>
+      </sc-if>
+
+      <!-- Bottom tabs -->
+      <div style="position: absolute; left: 0; right: 0; bottom: 0; z-index: 10; display: flex; background: var(--surface); border-top: 1px solid var(--grid-line); padding: 6px 8px 18px 8px;">
+        <button data-tab="roster" onClick="{{ tabClick }}" style="flex: 1; display: flex; flex-direction: column; align-items: center; gap: 3px; padding: 6px 0; border: none; background: none; cursor: pointer; font-family: var(--font-ui); color: {{ rosterTabColor }};">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v13a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z M3 9.5h18 M8 2v4 M16 2v4"></path></svg>
+          <span style="font-size: 10px; font-weight: 600;">Roster</span>
+        </button>
+        <button data-tab="fairness" onClick="{{ tabClick }}" style="flex: 1; display: flex; flex-direction: column; align-items: center; gap: 3px; padding: 6px 0; border: none; background: none; cursor: pointer; font-family: var(--font-ui); color: {{ fairnessTabColor }};">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M18 20V10 M12 20V4 M6 20v-6 M3 20h18"></path></svg>
+          <span style="font-size: 10px; font-weight: 600;">Fairness</span>
+        </button>
+      </div>
+    </div>
+  </x-import>
+</div>
+
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+class Component extends DCLogic {
+  state = { ready: false, tab: "roster", sheetDay: null };
+
+  async componentDidMount() {
+    const M = await import("./data/mura-data.js");
+    this._M = M;
+    this.setState({ ready: true });
+  }
+
+  tabClick = (e) => this.setState({ tab: e.currentTarget.getAttribute("data-tab"), sheetDay: null });
+  dayTap = (e) => {
+    const day = parseInt(e.currentTarget.getAttribute("data-day"), 10);
+    if (day) this.setState({ sheetDay: day });
+  };
+  sheetClose = () => this.setState({ sheetDay: null });
+
+  renderVals() {
+    const st = this.state;
+    if (!st.ready) return {};
+    const M = this._M;
+    const mk = "2026-06";
+    const m = M.MONTHS[mk];
+    const a = M.SHO_ROSTERS[mk].assignments;
+
+    const cells = M.buildCells(mk).map((day, idx) => {
+      if (!day) return { key: "b" + idx, real: false, bg: "var(--surface-sunken)", ring: "none", day: "" };
+      const asg = a[day];
+      const pen = asg.who;
+      const wk = M.isWeekend(mk, day);
+      const hol = m.holidays[day];
+      const today = day === 12;
+      let flag = "", flagInk = "var(--ink-tertiary)";
+      if (asg.cash) { flag = "◆"; flagInk = "var(--cash-ink)"; }
+      else if (asg.postCash) { flag = "■"; flagInk = "var(--postcash-ink)"; }
+      if (hol) { flag = "PH"; flagInk = "var(--danger)"; }
+      return {
+        key: "d" + day, real: true, day,
+        dd: String(day).padStart(2, "0"),
+        ddWeight: today ? 700 : 400,
+        ddColor: today ? "var(--teal-700)" : "var(--ink-tertiary)",
+        bg: hol ? "var(--holiday-bg)" : wk ? "var(--weekend-bg)" : "var(--surface)",
+        ring: today ? "inset 0 0 0 2px var(--teal-600)" : "none",
+        code: M.PEOPLE[pen].code,
+        ink: "var(--pen-" + pen + "-ink)",
+        chipBg: "var(--pen-" + pen + "-bg)",
+        flag, flagInk,
+      };
+    });
+
+    const legend = M.SHOS.map((k) => ({
+      code: M.PEOPLE[k].code,
+      name: M.PEOPLE[k].short,
+      dot: "var(--pen-" + k + "-dot)",
+    }));
+
+    const tallies = M.shoTallies(a);
+    const totalOC = M.SHOS.reduce((s, k) => s + tallies[k].onCall, 0);
+    const avg = totalOC / 4 || 1;
+    const fairRows = M.SHOS.map((k) => {
+      const t = tallies[k];
+      const ratio = t.onCall / avg;
+      const delta = Math.abs(ratio - 1);
+      return {
+        dot: "var(--pen-" + k + "-dot)",
+        name: M.PEOPLE[k].short,
+        oc: String(t.onCall).padStart(2, "0"),
+        cash: String(t.cash).padStart(2, "0"),
+        pc: String(t.postCash).padStart(2, "0"),
+        pct: Math.max(6, Math.min(100, ratio * 60)) + "%",
+        barColor: delta > 0.12 ? (ratio > 1 ? "var(--bar-over)" : "var(--bar-under)") : "var(--bar-balanced)",
+      };
+    });
+
+    let sheet = { sheetShow: false };
+    if (st.sheetDay) {
+      const asg = a[st.sheetDay];
+      const pen = asg.who;
+      const p = M.PEOPLE[pen];
+      const dows = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
+      const flags = [];
+      if (asg.cash) flags.push("◆ Cash day — Pu on consultant casualty.");
+      if (asg.postCash) flags.push("■ Post-cash — 8 am – 4 pm, hands over, may leave early with consultant's permission.");
+      if (asg.ncw) flags.push("Non-cash weekend — covers Sat + Sun, counts as 2 on-calls.");
+      if (m.holidays[st.sheetDay]) flags.push("Public holiday — " + m.holidays[st.sheetDay] + ".");
+      sheet = {
+        sheetShow: true,
+        sheetDate: dows[M.dowOf(mk, st.sheetDay)] + " · Jun " + String(st.sheetDay).padStart(2, "0") + ", 2026",
+        sheetCode: p.code,
+        sheetName: p.name + " · " + p.role,
+        sheetInk: "var(--pen-" + pen + "-ink)",
+        sheetBg: "var(--pen-" + pen + "-bg)",
+        sheetFlagsShow: flags.length > 0,
+        sheetFlags: flags.join(" "),
+        sheetSecondShow: !!asg.second,
+        sheetSecondCode: asg.second ? M.PEOPLE[asg.second].code : "",
+        sheetSecondInk: asg.second ? "var(--pen-" + asg.second + "-ink)" : "",
+        sheetSecondBg: asg.second ? "var(--pen-" + asg.second + "-bg)" : "",
+      };
+    }
+
+    return {
+      mobileTitle: "June 2026",
+      tabRoster: st.tab === "roster",
+      tabFairness: st.tab === "fairness",
+      tabClick: this.tabClick,
+      rosterTabColor: st.tab === "roster" ? "var(--teal-700)" : "var(--ink-tertiary)",
+      fairnessTabColor: st.tab === "fairness" ? "var(--teal-700)" : "var(--ink-tertiary)",
+      cells, dayTap: this.dayTap,
+      legend, fairRows,
+      ...sheet,
+      sheetClose: this.sheetClose,
+    };
+  }
+}
+
+</script>
+</body>
+</html>

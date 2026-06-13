@@ -49,7 +49,11 @@ export interface AppUser {
   email: string
   displayName: string
   role: Role
+  hospitalId: string | null
+  departmentId: string | null
   unitId: string | null
+  rosterLayers: RosterLayer[]
+  staffId: string | null
 }
 
 export interface DutyConfig {
@@ -84,9 +88,9 @@ export const useUsers = () =>
 
 export const useDutyConfigs = (unitId?: string) =>
   useQuery({
-    queryKey: ['duty-config', unitId ?? 'all'],
-    queryFn: async () =>
-      (await api.get<DutyConfig[]>('/duty-config', { params: unitId ? { unitId } : {} })).data,
+    queryKey: ['duty-config', unitId ?? 'none'],
+    enabled: !!unitId,
+    queryFn: async () => (await api.get<DutyConfig[]>('/duty-config', { params: { unitId } })).data,
   })
 
 // ── Mutations (generic invalidating helper) ──
@@ -138,30 +142,23 @@ export const useUpdateStaff = () =>
     [['staff']],
   )
 
-export const useCreateUser = () =>
-  useInvalidating(
-    (input: {
-      email: string
-      password: string
-      displayName: string
-      role: Role
-      unitId?: string | null
-    }) => api.post('/users', input),
-    [['users']],
-  )
+export interface UserInput {
+  email: string
+  password: string
+  displayName: string
+  role: Role
+  hospitalId?: string | null
+  departmentId?: string | null
+  unitId?: string | null
+  rosterLayers?: RosterLayer[]
+  staffId?: string | null
+}
+
+export const useCreateUser = () => useInvalidating((input: UserInput) => api.post('/users', input), [['users']])
 
 export const useUpdateUser = () =>
   useInvalidating(
-    ({
-      id,
-      ...input
-    }: {
-      id: string
-      password?: string
-      displayName?: string
-      role?: Role
-      unitId?: string | null
-    }) => api.patch(`/users/${id}`, input),
+    ({ id, ...input }: Partial<UserInput> & { id: string }) => api.patch(`/users/${id}`, input),
     [['users']],
   )
 
@@ -175,6 +172,9 @@ export const useUpsertDutyConfig = () =>
     }) => api.post('/duty-config', input),
     [['duty-config']],
   )
+
+export const useDeleteDutyConfig = () =>
+  useInvalidating((id: string) => api.delete(`/duty-config/${id}`), [['duty-config']])
 
 export interface PublicHoliday {
   id: string

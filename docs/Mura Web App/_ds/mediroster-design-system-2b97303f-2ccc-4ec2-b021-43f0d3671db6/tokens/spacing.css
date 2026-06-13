@@ -1,0 +1,46 @@
+/* ============================================================
+   MediRoster — Spacing, radii, shadows, layout
+   Tight, chart-like spacing. No radius > 8px on cards; chips 6px.
+   No shadow heavier than sm — this is a clinical tool.
+   ============================================================ */
+
+:root {
+  /* --- Spacing scale (4px base) --- */
+  --space-1:  4px;
+  --space-2:  8px;
+  --space-3:  12px;
+  --space-4:  16px;
+  --space-5:  20px;
+  --space-6:  24px;
+  --space-8:  32px;
+  --space-10: 40px;
+  --space-12: 48px;
+
+  /* --- Radii (capped at 8px) --- */
+  --radius-chip:  6px;   /* duty chips */
+  --radius-sm:    4px;   /* badges, inputs */
+  --radius-md:    6px;   /* buttons */
+  --radius-lg:    8px;   /* cards, panels — max */
+  --radius-pill:  999px; /* legend dots, pills */
+
+  /* --- Borders --- */
+  --border-hair:   1px solid var(--grid-line);
+  --border-strong: 1px solid var(--grid-line-strong);
+  --ring-width:    2px;
+
+  /* --- Shadows (nothing heavier than sm) --- */
+  --shadow-xs: 0 1px 1px rgba(27, 39, 51, 0.04);
+  --shadow-sm: 0 1px 3px rgba(27, 39, 51, 0.08), 0 1px 2px rgba(27, 39, 51, 0.04);
+  --shadow-lift: 0 4px 10px rgba(27, 39, 51, 0.12); /* dragged chip only */
+
+  /* --- Layout --- */
+  --sidebar-w:     236px;  /* desktop left nav */
+  --fairness-w:    280px;  /* calendar right sidebar */
+  --cell-min-h:    96px;   /* desktop calendar cell */
+  --container-max: 1280px;
+
+  /* --- Motion --- */
+  --ease-standard: cubic-bezier(0.2, 0, 0, 1); /* @kind other */
+  --dur-fast:      120ms; /* @kind other */
+  --dur-base:      180ms; /* @kind other */
+}

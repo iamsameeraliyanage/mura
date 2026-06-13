@@ -1,0 +1,280 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="stylesheet" href="_ds/mediroster-design-system-2b97303f-2ccc-4ec2-b021-43f0d3671db6/tokens/fonts.css">
+  <link rel="stylesheet" href="_ds/mediroster-design-system-2b97303f-2ccc-4ec2-b021-43f0d3671db6/tokens/colors.css">
+  <link rel="stylesheet" href="_ds/mediroster-design-system-2b97303f-2ccc-4ec2-b021-43f0d3671db6/tokens/pen-colors.css">
+  <link rel="stylesheet" href="_ds/mediroster-design-system-2b97303f-2ccc-4ec2-b021-43f0d3671db6/tokens/typography.css">
+  <link rel="stylesheet" href="_ds/mediroster-design-system-2b97303f-2ccc-4ec2-b021-43f0d3671db6/tokens/spacing.css">
+  <link rel="stylesheet" href="_ds/mediroster-design-system-2b97303f-2ccc-4ec2-b021-43f0d3671db6/tokens/base.css">
+  <link rel="stylesheet" href="_ds/mediroster-design-system-2b97303f-2ccc-4ec2-b021-43f0d3671db6/styles.css">
+  <script src="_ds/mediroster-design-system-2b97303f-2ccc-4ec2-b021-43f0d3671db6/_ds_bundle.js"></script>
+  <style>
+    html, body { margin: 0; padding: 0; background: #fafbfc; }
+  </style>
+</helmet>
+
+<div style="display: flex; height: 100vh; overflow: hidden; background: var(--paper); font-family: var(--font-ui); color: var(--ink);">
+
+  <!-- Sidebar -->
+  <aside style="width: 236px; flex-shrink: 0; display: flex; flex-direction: column; background: var(--surface); border-right: 1px solid var(--grid-line);">
+    <div style="display: flex; align-items: center; gap: 10px; padding: 20px 18px 6px 18px;">
+      <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="var(--teal-600)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M3 6a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v13a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
+        <path d="M3 9.5h18"></path><path d="M8 2v4"></path><path d="M16 2v4"></path>
+        <path d="M7.5 13.5h5.5" stroke="var(--pen-D-dot)"></path>
+        <path d="M7.5 17h8" stroke="var(--pen-S-dot)"></path>
+      </svg>
+      <span style="font-family: var(--font-display); font-weight: 600; font-size: 19px; letter-spacing: -0.01em;">MediRoster</span>
+    </div>
+    <div style="padding: 4px 18px 16px 54px; font-size: 10.5px; font-weight: 600; letter-spacing: 0.04em; color: var(--ink-tertiary);">LRH · PAEDIATRICS</div>
+    <nav style="display: flex; flex-direction: column; gap: 2px; padding: 4px 10px; flex: 1; overflow-y: auto;">
+      <sc-for list="{{ nav }}" as="n" hint-placeholder-count="8">
+        <a href="{{ n.href }}" style="display: flex; align-items: center; gap: 11px; height: 38px; padding: 0 12px; border-radius: 6px; text-decoration: none; white-space: nowrap; font-size: 13.5px; font-weight: {{ n.weight }}; color: {{ n.color }}; background: {{ n.bg }}; transition: background 120ms;" style-hover="background: var(--teal-50);">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="{{ n.icon }}"></path></svg>
+          <span>{{ n.label }}</span>
+        </a>
+      </sc-for>
+    </nav>
+    <div style="padding: 14px; border-top: 1px solid var(--grid-line);">
+      <div style="font-size: 10.5px; font-weight: 600; letter-spacing: 0.04em; color: var(--ink-tertiary); margin-bottom: 8px;">VIEWING AS</div>
+      <div style="display: flex; flex-direction: column; gap: 4px;">
+        <sc-for list="{{ roles }}" as="r" hint-placeholder-count="3">
+          <button data-role="{{ r.key }}" onClick="{{ switchRole }}" style="display: flex; align-items: center; gap: 9px; padding: 7px 9px; border-radius: 6px; border: 1px solid {{ r.border }}; background: {{ r.bg }}; cursor: pointer; text-align: left; font-family: var(--font-ui); width: 100%;" style-hover="border-color: var(--grid-line-strong);">
+            <span style="width: 24px; height: 24px; border-radius: 999px; background: {{ r.dotBg }}; color: {{ r.dotInk }}; font-size: 10.5px; font-weight: 700; display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0;">{{ r.initial }}</span>
+            <span style="flex: 1; min-width: 0;">
+              <span style="display: block; font-size: 12.5px; font-weight: 600; color: var(--ink);">{{ r.label }}</span>
+              <span style="display: block; font-size: 10.5px; color: var(--ink-secondary);">{{ r.caption }}</span>
+            </span>
+            <span style="color: var(--teal-600); font-size: 13px; font-weight: 700;">{{ r.check }}</span>
+          </button>
+        </sc-for>
+      </div>
+    </div>
+  </aside>
+
+  <!-- Main -->
+  <main data-screen-label="Unavailability" style="flex: 1; min-width: 0; overflow-y: auto;">
+    <div style="max-width: 920px; padding: 30px 28px 44px 28px;">
+
+      <div style="font-size: 11px; font-weight: 600; letter-spacing: 0.04em; color: var(--ink-secondary);">UNAVAILABLE DATES · RESPECTED BY THE GENERATOR</div>
+      <h1 style="margin: 6px 0 0 0; font-family: var(--font-display); font-weight: 600; font-size: 36px; letter-spacing: -0.01em; line-height: 1.1;">Who is away, when</h1>
+      <div style="margin-top: 7px; font-family: var(--font-mono); font-size: 12px; color: var(--ink-secondary);">THE GENERATOR SKIPS THESE DATES · EXISTING ASSIGNMENTS THAT CLASH ARE FLAGGED</div>
+
+      <!-- Add form -->
+      <div style="margin-top: 22px; background: var(--surface); border: 1px solid var(--grid-line); border-radius: 8px; box-shadow: var(--shadow-xs); padding: 17px;">
+        <div style="font-size: 10.5px; font-weight: 600; letter-spacing: 0.04em; color: var(--ink-tertiary);">MARK SOMEONE AWAY</div>
+        <div style="display: flex; gap: 6px; margin-top: 11px; flex-wrap: wrap;">
+          <sc-for list="{{ people }}" as="p" hint-placeholder-count="8">
+            <button data-pen="{{ p.pen }}" onClick="{{ pickPerson }}" style="display: inline-flex; align-items: center; gap: 7px; height: 30px; padding: 0 11px; border: 1px solid {{ p.border }}; border-radius: 6px; background: var(--surface); font-family: var(--font-ui); font-size: 12.5px; font-weight: 600; color: var(--ink); cursor: pointer; box-shadow: var(--shadow-xs); white-space: nowrap;" style-hover="border-color: var(--grid-line-strong);">
+              <span style="width: 9px; height: 9px; border-radius: 999px; background: {{ p.dot }};"></span>
+              {{ p.name }}
+            </button>
+          </sc-for>
+        </div>
+        <div style="display: flex; gap: 12px; align-items: flex-end; margin-top: 14px; flex-wrap: wrap;">
+          <div>
+            <div style="font-size: 10.5px; font-weight: 600; letter-spacing: 0.04em; color: var(--ink-secondary);">FROM</div>
+            <input type="date" value="{{ fromVal }}" onChange="{{ fromChange }}" style="box-sizing: border-box; height: 36px; margin-top: 6px; padding: 0 11px; border: 1px solid var(--grid-line-strong); border-radius: 4px; font-family: var(--font-mono); font-size: 12.5px; color: var(--ink); outline: none;" style-focus="border-color: var(--teal-600); box-shadow: 0 0 0 2px var(--teal-50);">
+          </div>
+          <div>
+            <div style="font-size: 10.5px; font-weight: 600; letter-spacing: 0.04em; color: var(--ink-secondary);">TO</div>
+            <input type="date" value="{{ toVal }}" onChange="{{ toChange }}" style="box-sizing: border-box; height: 36px; margin-top: 6px; padding: 0 11px; border: 1px solid var(--grid-line-strong); border-radius: 4px; font-family: var(--font-mono); font-size: 12.5px; color: var(--ink); outline: none;" style-focus="border-color: var(--teal-600); box-shadow: 0 0 0 2px var(--teal-50);">
+          </div>
+          <div style="flex: 1; min-width: 200px;">
+            <div style="font-size: 10.5px; font-weight: 600; letter-spacing: 0.04em; color: var(--ink-secondary);">REASON</div>
+            <input value="{{ reasonVal }}" onChange="{{ reasonChange }}" placeholder="e.g. Conference, exam, leave" style="width: 100%; box-sizing: border-box; height: 36px; margin-top: 6px; padding: 0 11px; border: 1px solid var(--grid-line-strong); border-radius: 4px; font-family: var(--font-ui); font-size: 13px; color: var(--ink); outline: none;" style-focus="border-color: var(--teal-600); box-shadow: 0 0 0 2px var(--teal-50);">
+          </div>
+          <x-import component-from-global-scope="MediRosterDesignSystem_2b9730.PrimaryButton" onClick="{{ addClick }}" hint-size="120px,36px">Block dates</x-import>
+        </div>
+      </div>
+
+      <!-- Entries -->
+      <div style="margin-top: 20px; display: flex; flex-direction: column; gap: 10px;">
+        <sc-for list="{{ entries }}" as="u" hint-placeholder-count="4">
+          <div style="display: flex; align-items: center; gap: 13px; background: var(--surface); border: 1px solid {{ u.border }}; border-radius: 8px; box-shadow: var(--shadow-xs); padding: 13px 16px; opacity: {{ u.opacity }};">
+            <span style="min-width: 32px; height: 28px; padding: 0 9px; border-radius: 6px; display: inline-flex; align-items: center; justify-content: center; font-size: 14px; font-weight: 600; color: {{ u.ink }}; background: {{ u.bg }};">{{ u.code }}</span>
+            <div style="flex: 1; min-width: 0;">
+              <div style="display: flex; align-items: baseline; gap: 9px;">
+                <span style="font-size: 14px; font-weight: 600;">{{ u.name }}</span>
+                <span style="font-family: var(--font-mono); font-size: 12px; color: var(--ink-secondary); white-space: nowrap;">{{ u.range }}</span>
+              </div>
+              <div style="font-size: 12px; color: var(--ink-secondary); margin-top: 2px;">{{ u.reason }} · added by {{ u.by }} · {{ u.at }}</div>
+              <sc-if value="{{ u.conflictShow }}" hint-placeholder-val="{{ false }}">
+                <div style="display: flex; align-items: center; gap: 8px; margin-top: 8px;">
+                  <span style="display: inline-flex; align-items: center; height: 20px; padding: 0 8px; font-size: 10px; font-weight: 700; letter-spacing: 0.04em; color: var(--danger); background: var(--danger-bg); border-radius: 4px;">⚠ {{ u.conflictLabel }}</span>
+                  <a href="{{ u.conflictHref }}" style="font-size: 12px; font-weight: 600; color: var(--teal-700); text-decoration: none;" style-hover="text-decoration: underline;">Resolve on the roster</a>
+                </div>
+              </sc-if>
+              <sc-if value="{{ u.resolvedShow }}" hint-placeholder-val="{{ false }}">
+                <div style="margin-top: 8px;">
+                  <span style="display: inline-flex; align-items: center; height: 20px; padding: 0 8px; font-size: 10px; font-weight: 700; letter-spacing: 0.04em; color: var(--published-ink); background: var(--published-bg); border-radius: 4px;">✓ RESOLVED BY SWAP</span>
+                </div>
+              </sc-if>
+            </div>
+            <sc-if value="{{ canEdit }}" hint-placeholder-val="{{ true }}">
+              <button data-id="{{ u.id }}" onClick="{{ removeClick }}" title="Remove" style="width: 28px; height: 28px; border: 1px solid var(--grid-line); border-radius: 6px; background: var(--surface); color: var(--ink-tertiary); font-size: 14px; cursor: pointer; line-height: 1;" style-hover="color: var(--danger); border-color: var(--danger);">×</button>
+            </sc-if>
+          </div>
+        </sc-for>
+      </div>
+      <div style="margin-top: 14px; font-size: 11.5px; color: var(--ink-tertiary);">Blocked dates feed straight into the generator. If a published roster already assigns the person inside a blocked range, the clash is flagged here and on the roster.</div>
+    </div>
+  </main>
+
+  <!-- Toast -->
+  <sc-if value="{{ toastShow }}" hint-placeholder-val="{{ false }}">
+    <div style="position: fixed; left: 50%; bottom: 26px; transform: translateX(-50%); z-index: 70; background: var(--ink); color: #ffffff; font-size: 13px; font-weight: 500; padding: 10px 16px; border-radius: 6px; box-shadow: var(--shadow-lift); white-space: nowrap;">{{ toastText }}</div>
+  </sc-if>
+</div>
+
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+class Component extends DCLogic {
+  state = {
+    ready: false, role: "E1",
+    person: "G", fromVal: "2026-07-10", toVal: "2026-07-15", reasonVal: "",
+    entries: null, toast: null, nextId: 100,
+  };
+
+  async componentDidMount() {
+    const M = await import("./data/mura-data.js");
+    this._M = M;
+    this.setState({ ready: true, role: M.getRole(), entries: JSON.parse(JSON.stringify(M.UNAVAILABILITY)) });
+  }
+
+  showToast(t) {
+    clearTimeout(this._toastT);
+    this.setState({ toast: t });
+    this._toastT = setTimeout(() => this.setState({ toast: null }), 3200);
+  }
+
+  switchRole = (e) => {
+    const r = e.currentTarget.getAttribute("data-role");
+    this._M.setRole(r);
+    this.setState({ role: r });
+  };
+
+  pickPerson = (e) => this.setState({ person: e.currentTarget.getAttribute("data-pen") });
+  fromChange = (e) => this.setState({ fromVal: e.target.value });
+  toChange = (e) => this.setState({ toVal: e.target.value });
+  reasonChange = (e) => this.setState({ reasonVal: e.target.value });
+
+  removeClick = (e) => {
+    const id = parseInt(e.currentTarget.getAttribute("data-id"), 10);
+    this.setState({ entries: this.state.entries.filter((u) => u.id !== id) });
+    this.showToast("Blocked dates removed");
+  };
+
+  /* find clashes with existing assignments for the chosen range */
+  findConflicts(pen, fromISO, toISO) {
+    const M = this._M;
+    const out = [];
+    const from = new Date(fromISO + "T00:00:00");
+    const to = new Date(toISO + "T00:00:00");
+    for (let d = new Date(from); d <= to; d.setDate(d.getDate() + 1)) {
+      const mk = d.toISOString().slice(0, 7);
+      const day = d.getDate();
+      const cons = M.CONSULTANT_ROSTERS[mk];
+      if (cons && cons.assignments && cons.assignments[day] === pen) out.push({ mk, day });
+      const sho = M.SHO_ROSTERS[mk];
+      if (sho && sho.assignments && sho.assignments[day] && sho.assignments[day].who === pen) out.push({ mk, day });
+    }
+    return out;
+  }
+
+  addClick = () => {
+    const st = this.state;
+    if (!st.fromVal || !st.toVal || st.toVal < st.fromVal) { this.showToast("Pick a valid date range"); return; }
+    const M = this._M;
+    const p = M.PEOPLE[st.person];
+    const conflicts = this.findConflicts(st.person, st.fromVal, st.toVal);
+    const fmt = (iso) => {
+      const dt = new Date(iso + "T00:00:00");
+      return ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"][dt.getMonth()] + " " + String(dt.getDate()).padStart(2, "0");
+    };
+    const entry = {
+      id: st.nextId, who: st.person,
+      from: fmt(st.fromVal), to: fmt(st.toVal),
+      month: st.fromVal.slice(0, 7),
+      days: conflicts.map((c) => c.day),
+      reason: st.reasonVal || "Personal leave",
+      by: M.ROLES[st.role].person, at: "Jun 12, " + new Date().toTimeString().slice(0, 5),
+      conflicts: conflicts.map((c) => c.day),
+      conflictMonths: conflicts.map((c) => c.mk),
+    };
+    this.setState({ entries: [entry].concat(st.entries), nextId: st.nextId + 1, reasonVal: "" });
+    this.showToast(conflicts.length
+      ? p.short + " blocked — " + conflicts.length + " existing assignment" + (conflicts.length > 1 ? "s clash" : " clashes")
+      : p.short + " blocked — the generator will skip these dates");
+  };
+
+  renderVals() {
+    const st = this.state;
+    if (!st.ready) return {};
+    const M = this._M;
+    const canEdit = true;
+
+    const nav = M.NAV.filter((n) => n.roles.indexOf(st.role) >= 0).map((n) => ({
+      ...n,
+      weight: n.id === "unavail" ? 600 : 500,
+      color: n.id === "unavail" ? "var(--teal-700)" : "var(--ink-secondary)",
+      bg: n.id === "unavail" ? "var(--teal-50)" : "transparent",
+    }));
+    const roleDots = { ADMIN: ["var(--surface-sunken)", "var(--ink-secondary)"], E1: ["var(--pen-G-bg)", "var(--pen-G-ink)"], E2: ["var(--pen-Rt-bg)", "var(--pen-Rt-ink)"] };
+    const roles = ["ADMIN", "E1", "E2"].map((k) => ({
+      key: k, label: M.ROLES[k].label, caption: M.ROLES[k].caption,
+      initial: M.ROLES[k].label.replace("Dr. ", "").slice(0, 1),
+      dotBg: roleDots[k][0], dotInk: roleDots[k][1],
+      border: st.role === k ? "var(--teal-600)" : "var(--grid-line)",
+      bg: st.role === k ? "var(--teal-50)" : "var(--surface)",
+      check: st.role === k ? "✓" : "",
+    }));
+
+    const people = ["R", "G", "Pu", "D", "S", "Rt", "M", "U"].map((k) => ({
+      pen: k,
+      name: M.PEOPLE[k].short,
+      dot: "var(--pen-" + k + "-dot)",
+      border: st.person === k ? "var(--teal-600)" : "var(--grid-line)",
+    }));
+
+    const entries = st.entries.map((u) => {
+      const p = M.PEOPLE[u.who];
+      const hasConflict = u.conflicts && u.conflicts.length > 0 && !u.resolved;
+      const mShort = { "2026-06": "Jun", "2026-07": "Jul", "2026-08": "Aug" }[u.month] || "";
+      return {
+        id: u.id, code: p.code, name: p.name,
+        ink: "var(--pen-" + u.who + "-ink)", bg: "var(--pen-" + u.who + "-bg)",
+        range: u.from + " → " + u.to,
+        reason: u.reason, by: u.by, at: u.at,
+        conflictShow: hasConflict,
+        conflictLabel: hasConflict ? u.conflicts.length + " ROSTER CLASH" + (u.conflicts.length > 1 ? "ES" : "") + " — " + u.conflicts.map((d) => mShort + " " + d).join(", ") : "",
+        conflictHref: M.CONSULTANTS.indexOf(u.who) >= 0 ? "Consultant Roster.dc.html" : "SHO Roster.dc.html",
+        resolvedShow: !!u.resolved,
+        border: hasConflict ? "#f2c8c8" : "var(--grid-line)",
+        opacity: u.resolved ? 0.62 : 1,
+      };
+    });
+
+    return {
+      nav, roles, switchRole: this.switchRole,
+      people, pickPerson: this.pickPerson,
+      fromVal: st.fromVal, toVal: st.toVal, reasonVal: st.reasonVal,
+      fromChange: this.fromChange, toChange: this.toChange, reasonChange: this.reasonChange,
+      addClick: this.addClick,
+      entries, removeClick: this.removeClick, canEdit,
+      toastShow: !!st.toast, toastText: st.toast || "",
+    };
+  }
+}
+
+</script>
+</body>
+</html>

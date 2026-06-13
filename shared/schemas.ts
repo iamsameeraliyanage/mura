@@ -57,20 +57,54 @@ export const staffCreateSchema = z.object({
 export const staffUpdateSchema = staffCreateSchema.omit({ unitId: true }).partial()
 
 // ── Admin: users ──
+// Each role carries exactly one scope: HOSPITAL_ADMIN→hospitalId,
+// DEPARTMENT_ADMIN→departmentId, ROSTER_ADMIN→unitId+rosterLayers.
 
-export const userCreateSchema = z.object({
-  email: z.string().email(),
-  password: z.string().min(8),
-  displayName: z.string().min(1),
-  role: roleSchema,
+const userScopeShape = {
+  hospitalId: z.string().nullable().optional(),
+  departmentId: z.string().nullable().optional(),
   unitId: z.string().nullable().optional(),
-})
-export const userUpdateSchema = z.object({
-  password: z.string().min(8).optional(),
-  displayName: z.string().min(1).optional(),
-  role: roleSchema.optional(),
-  unitId: z.string().nullable().optional(),
-})
+  rosterLayers: z.array(rosterLayerSchema).optional(),
+  staffId: z.string().nullable().optional(),
+}
+
+function checkUserScope(
+  v: { role?: z.infer<typeof roleSchema> } & {
+    hospitalId?: string | null
+    departmentId?: string | null
+    unitId?: string | null
+    rosterLayers?: string[]
+  },
+  ctx: z.RefinementCtx,
+) {
+  if (v.role === 'HOSPITAL_ADMIN' && !v.hospitalId)
+    ctx.addIssue({ code: 'custom', message: 'A hospital admin needs a hospital' })
+  if (v.role === 'DEPARTMENT_ADMIN' && !v.departmentId)
+    ctx.addIssue({ code: 'custom', message: 'A department admin needs a department' })
+  if (v.role === 'ROSTER_ADMIN' && (!v.unitId || !v.rosterLayers?.length))
+    ctx.addIssue({ code: 'custom', message: 'A roster admin needs a ward and at least one roster' })
+}
+
+export const userCreateSchema = z
+  .object({
+    email: z.string().email(),
+    password: z.string().min(8),
+    displayName: z.string().min(1),
+    role: roleSchema,
+    ...userScopeShape,
+  })
+  .superRefine(checkUserScope)
+
+export const userUpdateSchema = z
+  .object({
+    password: z.string().min(8).optional(),
+    displayName: z.string().min(1).optional(),
+    role: roleSchema.optional(),
+    ...userScopeShape,
+  })
+  .superRefine((v, ctx) => {
+    if (v.role) checkUserScope(v, ctx)
+  })
 
 // ── Admin: duty config ──
 

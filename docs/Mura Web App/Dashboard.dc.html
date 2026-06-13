@@ -1,0 +1,286 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="stylesheet" href="_ds/mediroster-design-system-2b97303f-2ccc-4ec2-b021-43f0d3671db6/tokens/fonts.css">
+  <link rel="stylesheet" href="_ds/mediroster-design-system-2b97303f-2ccc-4ec2-b021-43f0d3671db6/tokens/colors.css">
+  <link rel="stylesheet" href="_ds/mediroster-design-system-2b97303f-2ccc-4ec2-b021-43f0d3671db6/tokens/pen-colors.css">
+  <link rel="stylesheet" href="_ds/mediroster-design-system-2b97303f-2ccc-4ec2-b021-43f0d3671db6/tokens/typography.css">
+  <link rel="stylesheet" href="_ds/mediroster-design-system-2b97303f-2ccc-4ec2-b021-43f0d3671db6/tokens/spacing.css">
+  <link rel="stylesheet" href="_ds/mediroster-design-system-2b97303f-2ccc-4ec2-b021-43f0d3671db6/tokens/base.css">
+  <link rel="stylesheet" href="_ds/mediroster-design-system-2b97303f-2ccc-4ec2-b021-43f0d3671db6/styles.css">
+  <script src="_ds/mediroster-design-system-2b97303f-2ccc-4ec2-b021-43f0d3671db6/_ds_bundle.js"></script>
+  <style>
+    html, body { margin: 0; padding: 0; background: #fafbfc; }
+  </style>
+</helmet>
+
+<div style="display: flex; height: 100vh; overflow: hidden; background: var(--paper); font-family: var(--font-ui); color: var(--ink);">
+
+  <!-- Sidebar -->
+  <aside style="width: 236px; flex-shrink: 0; display: flex; flex-direction: column; background: var(--surface); border-right: 1px solid var(--grid-line);">
+    <div style="display: flex; align-items: center; gap: 10px; padding: 20px 18px 6px 18px;">
+      <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="var(--teal-600)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M3 6a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v13a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
+        <path d="M3 9.5h18"></path><path d="M8 2v4"></path><path d="M16 2v4"></path>
+        <path d="M7.5 13.5h5.5" stroke="var(--pen-D-dot)"></path>
+        <path d="M7.5 17h8" stroke="var(--pen-S-dot)"></path>
+      </svg>
+      <span style="font-family: var(--font-display); font-weight: 600; font-size: 19px; letter-spacing: -0.01em;">MediRoster</span>
+    </div>
+    <div style="padding: 4px 18px 16px 54px; font-size: 10.5px; font-weight: 600; letter-spacing: 0.04em; color: var(--ink-tertiary);">LRH · PAEDIATRICS</div>
+    <nav style="display: flex; flex-direction: column; gap: 2px; padding: 4px 10px; flex: 1; overflow-y: auto;">
+      <sc-for list="{{ nav }}" as="n" hint-placeholder-count="8">
+        <a href="{{ n.href }}" style="display: flex; align-items: center; gap: 11px; height: 38px; padding: 0 12px; border-radius: 6px; text-decoration: none; white-space: nowrap; font-size: 13.5px; font-weight: {{ n.weight }}; color: {{ n.color }}; background: {{ n.bg }}; transition: background 120ms;" style-hover="background: var(--teal-50);">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="{{ n.icon }}"></path></svg>
+          <span>{{ n.label }}</span>
+        </a>
+      </sc-for>
+    </nav>
+    <div style="padding: 14px; border-top: 1px solid var(--grid-line);">
+      <div style="font-size: 10.5px; font-weight: 600; letter-spacing: 0.04em; color: var(--ink-tertiary); margin-bottom: 8px;">VIEWING AS</div>
+      <div style="display: flex; flex-direction: column; gap: 4px;">
+        <sc-for list="{{ roles }}" as="r" hint-placeholder-count="3">
+          <button data-role="{{ r.key }}" onClick="{{ switchRole }}" style="display: flex; align-items: center; gap: 9px; padding: 7px 9px; border-radius: 6px; border: 1px solid {{ r.border }}; background: {{ r.bg }}; cursor: pointer; text-align: left; font-family: var(--font-ui); width: 100%;" style-hover="border-color: var(--grid-line-strong);">
+            <span style="width: 24px; height: 24px; border-radius: 999px; background: {{ r.dotBg }}; color: {{ r.dotInk }}; font-size: 10.5px; font-weight: 700; display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0;">{{ r.initial }}</span>
+            <span style="flex: 1; min-width: 0;">
+              <span style="display: block; font-size: 12.5px; font-weight: 600; color: var(--ink);">{{ r.label }}</span>
+              <span style="display: block; font-size: 10.5px; color: var(--ink-secondary);">{{ r.caption }}</span>
+            </span>
+            <span style="color: var(--teal-600); font-size: 13px; font-weight: 700;">{{ r.check }}</span>
+          </button>
+        </sc-for>
+      </div>
+    </div>
+  </aside>
+
+  <!-- Main -->
+  <main data-screen-label="Dashboard" style="flex: 1; min-width: 0; overflow-y: auto;">
+    <div style="max-width: 1080px; padding: 30px 28px 40px 28px;">
+
+      <div style="font-family: var(--font-mono); font-size: 12px; color: var(--ink-secondary);">FRIDAY · JUNE 12, 2026</div>
+      <h1 style="margin: 6px 0 0 0; font-family: var(--font-display); font-weight: 600; font-size: 36px; letter-spacing: -0.01em; line-height: 1.1;">{{ greeting }}</h1>
+
+      <!-- Today / tomorrow strip -->
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-top: 22px;">
+        <div style="background: var(--surface); border: 1px solid var(--grid-line); border-radius: 8px; box-shadow: var(--shadow-xs); padding: 18px; position: relative;">
+          <div style="display: flex; align-items: center; justify-content: space-between;">
+            <span style="font-size: 10.5px; font-weight: 600; letter-spacing: 0.04em; color: var(--ink-tertiary);">TODAY · JUN 12</span>
+            <span style="font-size: 9px; font-weight: 700; letter-spacing: 0.05em; color: var(--teal-700); background: var(--teal-50); border-radius: 4px; padding: 2px 6px;">NOW</span>
+          </div>
+          <div style="display: flex; gap: 24px; margin-top: 14px;">
+            <div style="flex: 1;">
+              <div style="font-size: 11px; color: var(--ink-secondary); margin-bottom: 7px;">Consultant casualty</div>
+              <div style="display: flex; align-items: center; gap: 9px;">
+                <span style="min-width: 36px; height: 30px; padding: 0 11px; border-radius: 6px; display: inline-flex; align-items: center; justify-content: center; font-size: 15px; font-weight: 600; color: var(--pen-D-ink); background: var(--pen-D-bg);">D</span>
+                <div>
+                  <div style="font-size: 13.5px; font-weight: 600;">Dr. Dinesha</div>
+                  <div style="font-family: var(--font-mono); font-size: 10.5px; color: var(--ink-secondary);">8:00 am → 8:00 am · 24 h</div>
+                </div>
+              </div>
+            </div>
+            <div style="width: 1px; background: var(--grid-line);"></div>
+            <div style="flex: 1;">
+              <div style="font-size: 11px; color: var(--ink-secondary); margin-bottom: 7px;">SHO/RHO on-call</div>
+              <div style="display: flex; align-items: center; gap: 9px;">
+                <span style="min-width: 36px; height: 30px; padding: 0 11px; border-radius: 6px; display: inline-flex; align-items: center; justify-content: center; font-size: 15px; font-weight: 600; color: var(--pen-M-ink); background: var(--pen-M-bg);">M</span>
+                <div>
+                  <div style="font-size: 13.5px; font-weight: 600;">Mekala <span style="display: inline-flex; align-items: center; height: 16px; padding: 0 5px; font-size: 9.5px; font-weight: 600; color: var(--postcash-ink); background: var(--postcash-bg); border-radius: 4px; vertical-align: 2px;">■ POST</span></div>
+                  <div style="font-family: var(--font-mono); font-size: 10.5px; color: var(--ink-secondary);">post-cash of Jun 11 · 8 am – 4 pm</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div style="background: var(--surface); border: 1px solid var(--grid-line); border-radius: 8px; box-shadow: var(--shadow-xs); padding: 18px;">
+          <span style="font-size: 10.5px; font-weight: 600; letter-spacing: 0.04em; color: var(--ink-tertiary);">TOMORROW · SAT JUN 13</span>
+          <div style="display: flex; gap: 24px; margin-top: 14px;">
+            <div style="flex: 1;">
+              <div style="font-size: 11px; color: var(--ink-secondary); margin-bottom: 7px;">Weekend casualty · 48 h</div>
+              <div style="display: flex; align-items: center; gap: 9px;">
+                <span style="min-width: 36px; height: 30px; padding: 0 11px; border-radius: 6px; display: inline-flex; align-items: center; justify-content: center; font-size: 15px; font-weight: 600; color: var(--pen-G-ink); background: var(--pen-G-bg);">G</span>
+                <div>
+                  <div style="font-size: 13.5px; font-weight: 600;">Dr. Gihan</div>
+                  <div style="font-family: var(--font-mono); font-size: 10.5px; color: var(--ink-secondary);">Sat 8:00 am → Mon 8:00 am</div>
+                </div>
+              </div>
+            </div>
+            <div style="width: 1px; background: var(--grid-line);"></div>
+            <div style="flex: 1;">
+              <div style="font-size: 11px; color: var(--ink-secondary); margin-bottom: 7px;">Non-cash weekend · 2 OC</div>
+              <div style="display: flex; align-items: center; gap: 9px;">
+                <span style="min-width: 36px; height: 30px; padding: 0 11px; border-radius: 6px; display: inline-flex; align-items: center; justify-content: center; font-size: 15px; font-weight: 600; color: var(--pen-S-ink); background: var(--pen-S-bg);">S</span>
+                <div>
+                  <div style="font-size: 13.5px; font-weight: 600;">Sulakshana</div>
+                  <div style="font-family: var(--font-mono); font-size: 10.5px; color: var(--ink-secondary);">covers Sat 13 + Sun 14</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Roster status cards -->
+      <div style="margin-top: 26px; font-size: 10.5px; font-weight: 600; letter-spacing: 0.04em; color: var(--ink-tertiary);">ROSTERS</div>
+      <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; margin-top: 10px;">
+        <sc-for list="{{ statusCards }}" as="s" hint-placeholder-count="4">
+          <a href="{{ s.href }}" style="display: block; background: var(--surface); border: 1px solid var(--grid-line); border-radius: 8px; box-shadow: var(--shadow-xs); padding: 15px; text-decoration: none; color: var(--ink); transition: border-color 120ms;" style-hover="border-color: var(--teal-600);">
+            <div style="font-family: var(--font-mono); font-size: 11px; color: var(--ink-secondary);">{{ s.month }}</div>
+            <div style="font-size: 14px; font-weight: 600; margin-top: 3px;">{{ s.layer }}</div>
+            <div style="display: inline-flex; align-items: center; gap: 6px; height: 22px; padding: 0 9px; margin-top: 11px; font-size: 10.5px; font-weight: 600; letter-spacing: 0.04em; color: {{ s.ink }}; background: {{ s.bg }}; border-radius: 4px;">
+              <span style="width: 6px; height: 6px; border-radius: 999px; background: {{ s.ink }};"></span>
+              {{ s.status }}
+            </div>
+            <div style="font-size: 11.5px; color: var(--ink-secondary); margin-top: 9px; line-height: 1.45;">{{ s.note }}</div>
+          </a>
+        </sc-for>
+      </div>
+
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-top: 26px; align-items: start;">
+        <!-- Your June days -->
+        <div style="background: var(--surface); border: 1px solid var(--grid-line); border-radius: 8px; box-shadow: var(--shadow-xs); padding: 18px;">
+          <div style="display: flex; align-items: baseline; justify-content: space-between;">
+            <span style="font-size: 14px; font-weight: 600;">{{ daysTitle }}</span>
+            <span style="font-family: var(--font-mono); font-size: 11px; color: var(--ink-secondary);">{{ daysCount }}</span>
+          </div>
+          <div style="display: flex; flex-wrap: wrap; gap: 7px; margin-top: 13px;">
+            <sc-for list="{{ myDays }}" as="d" hint-placeholder-count="8">
+              <span style="display: inline-flex; flex-direction: column; align-items: center; gap: 3px; min-width: 44px; padding: 7px 8px 6px 8px; border: 1px solid {{ d.border }}; border-radius: 6px; background: {{ d.bg }};">
+                <span style="font-family: var(--font-mono); font-size: 12.5px; font-weight: 700; color: {{ d.ink }};">{{ d.dd }}</span>
+                <span style="font-size: 9px; font-weight: 600; letter-spacing: 0.03em; color: {{ d.subInk }};">{{ d.sub }}</span>
+              </span>
+            </sc-for>
+          </div>
+          <div style="margin-top: 12px; font-size: 11.5px; line-height: 1.5; color: var(--ink-secondary);">{{ daysNote }}</div>
+        </div>
+
+        <!-- Recent activity -->
+        <div style="background: var(--surface); border: 1px solid var(--grid-line); border-radius: 8px; box-shadow: var(--shadow-xs); padding: 18px;">
+          <div style="display: flex; align-items: baseline; justify-content: space-between;">
+            <span style="font-size: 14px; font-weight: 600;">Recent activity</span>
+            <a href="Audit.dc.html" style="font-size: 12px; font-weight: 600; color: var(--teal-700); text-decoration: none;" style-hover="text-decoration: underline;">Audit trail</a>
+          </div>
+          <div style="display: flex; flex-direction: column; margin-top: 6px;">
+            <sc-for list="{{ activity }}" as="a" hint-placeholder-count="4">
+              <div style="display: flex; gap: 11px; padding: 10px 0; border-bottom: 1px solid var(--grid-line);">
+                <span style="width: 7px; height: 7px; border-radius: 999px; background: {{ a.dot }}; margin-top: 5px; flex-shrink: 0;"></span>
+                <div style="flex: 1; min-width: 0;">
+                  <div style="font-size: 12.5px; line-height: 1.45;"><strong style="font-weight: 600;">{{ a.who }}</strong> {{ a.what }}</div>
+                  <div style="font-family: var(--font-mono); font-size: 10.5px; color: var(--ink-tertiary); margin-top: 2px;">{{ a.at }}</div>
+                </div>
+              </div>
+            </sc-for>
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+</div>
+
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+class Component extends DCLogic {
+  state = { ready: false, role: "E1" };
+
+  async componentDidMount() {
+    const M = await import("./data/mura-data.js");
+    this._M = M;
+    this.setState({ ready: true, role: M.getRole() });
+  }
+
+  switchRole = (e) => {
+    const r = e.currentTarget.getAttribute("data-role");
+    this._M.setRole(r);
+    this.setState({ role: r });
+  };
+
+  renderVals() {
+    const st = this.state;
+    if (!st.ready) return {};
+    const M = this._M;
+
+    const nav = M.NAV.filter((n) => n.roles.indexOf(st.role) >= 0).map((n) => ({
+      ...n,
+      weight: n.id === "dashboard" ? 600 : 500,
+      color: n.id === "dashboard" ? "var(--teal-700)" : "var(--ink-secondary)",
+      bg: n.id === "dashboard" ? "var(--teal-50)" : "transparent",
+    }));
+    const roleDots = { ADMIN: ["var(--surface-sunken)", "var(--ink-secondary)"], E1: ["var(--pen-G-bg)", "var(--pen-G-ink)"], E2: ["var(--pen-Rt-bg)", "var(--pen-Rt-ink)"] };
+    const roles = ["ADMIN", "E1", "E2"].map((k) => ({
+      key: k, label: M.ROLES[k].label, caption: M.ROLES[k].caption,
+      initial: M.ROLES[k].label.replace("Dr. ", "").slice(0, 1),
+      dotBg: roleDots[k][0], dotInk: roleDots[k][1],
+      border: st.role === k ? "var(--teal-600)" : "var(--grid-line)",
+      bg: st.role === k ? "var(--teal-50)" : "var(--surface)",
+      check: st.role === k ? "✓" : "",
+    }));
+
+    const names = { ADMIN: "Good morning", E1: "Good morning, Dr. Wasana", E2: "Good morning, Ruwanda" };
+
+    const statusCards = [
+      { month: "JUN 2026", layer: "Consultant roster", status: "PUBLISHED", ink: "var(--published-ink)", bg: "var(--published-bg)", note: "v3 · published May 28 · drives June cash days", href: "Consultant Roster.dc.html" },
+      { month: "JUN 2026", layer: "SHO/RHO roster", status: "PUBLISHED", ink: "var(--published-ink)", bg: "var(--published-bg)", note: "v2 · built against consultant v3 · no conflicts", href: "SHO Roster.dc.html" },
+      { month: "JUL 2026", layer: "Consultant roster", status: "DRAFT", ink: "var(--draft-ink)", bg: "var(--draft-bg)", note: "v1 · 2 conflicts — Gihan unavailable Jul 10–15", href: "Consultant Roster.dc.html" },
+      { month: "JUL 2026", layer: "SHO/RHO roster", status: "LOCKED", ink: "var(--ink-secondary)", bg: "var(--surface-sunken)", note: "Unlocks when the July consultant roster is published", href: "SHO Roster.dc.html" },
+    ];
+
+    /* Ruwanda's June days (pen Rt): from the fixture */
+    const rtDays = [
+      { dd: "01", sub: "■ POST" }, { dd: "04", sub: "■ POST" }, { dd: "10", sub: "ON-CALL" },
+      { dd: "15", sub: "ON-CALL" }, { dd: "19", sub: "◆ CASH" }, { dd: "22", sub: "ON-CALL" },
+      { dd: "28", sub: "◆ SUN" }, { dd: "30", sub: "ON-CALL" },
+    ].map((d) => ({
+      ...d,
+      ink: "var(--pen-Rt-ink)",
+      bg: "var(--pen-Rt-bg)",
+      border: "transparent",
+      subInk: d.sub.indexOf("◆") >= 0 ? "var(--cash-ink)" : d.sub.indexOf("■") >= 0 ? "var(--postcash-ink)" : "var(--ink-secondary)",
+    }));
+
+    /* Pu days (drives SHO cash) for E1/Admin view */
+    const puDays = [3, 8, 11, 19, 23, 27, 28].map((d) => ({
+      dd: String(d).padStart(2, "0"),
+      sub: d >= 27 ? "WEEKEND" : "CASH",
+      ink: "var(--pen-Pu-ink)", bg: "var(--pen-Pu-bg)", border: "transparent",
+      subInk: "var(--ink-secondary)",
+    }));
+
+    const isE2 = st.role === "E2";
+
+    const dotMap = { publish: "var(--published-ink)", generate: "var(--draft-ink)", swap: "var(--teal-600)", unavail: "var(--cash-ink)", config: "var(--ink-tertiary)" };
+    const activity = M.AUDIT.slice(0, 4).map((a) => ({
+      who: a.who,
+      what: a.action === "swap" ? "swapped " + a.detail + " (" + a.before + " → " + a.after + ") · " + a.roster
+        : a.action === "publish" ? "published " + a.roster
+        : a.action === "generate" ? "generated " + a.roster
+        : a.action === "unavail" ? "blocked dates — " + a.detail
+        : a.detail,
+      at: a.at,
+      dot: dotMap[a.action] || "var(--ink-tertiary)",
+    }));
+
+    return {
+      nav, roles, switchRole: this.switchRole,
+      greeting: names[st.role],
+      statusCards,
+      daysTitle: isE2 ? "Your June days" : "Prof Unit casualty days — June",
+      daysCount: isE2 ? "8 ON-CALLS · 2 ◆ · 2 ■" : "7 DAYS · 1 WEEKEND BLOCK",
+      myDays: isE2 ? rtDays : puDays,
+      daysNote: isE2
+        ? "Your non-cash weekend came in May — June's rotation ran M → S → U."
+        : "These days set the SHO/RHO cash days. Moving one after the SHO roster is published flags the affected dates.",
+      activity,
+    };
+  }
+}
+
+</script>
+</body>
+</html>

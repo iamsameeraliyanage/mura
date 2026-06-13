@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="stylesheet" href="_ds/mediroster-design-system-2b97303f-2ccc-4ec2-b021-43f0d3671db6/tokens/fonts.css">
+  <link rel="stylesheet" href="_ds/mediroster-design-system-2b97303f-2ccc-4ec2-b021-43f0d3671db6/tokens/colors.css">
+  <link rel="stylesheet" href="_ds/mediroster-design-system-2b97303f-2ccc-4ec2-b021-43f0d3671db6/tokens/pen-colors.css">
+  <link rel="stylesheet" href="_ds/mediroster-design-system-2b97303f-2ccc-4ec2-b021-43f0d3671db6/tokens/typography.css">
+  <link rel="stylesheet" href="_ds/mediroster-design-system-2b97303f-2ccc-4ec2-b021-43f0d3671db6/tokens/spacing.css">
+  <link rel="stylesheet" href="_ds/mediroster-design-system-2b97303f-2ccc-4ec2-b021-43f0d3671db6/tokens/base.css">
+  <link rel="stylesheet" href="_ds/mediroster-design-system-2b97303f-2ccc-4ec2-b021-43f0d3671db6/styles.css">
+  <script src="_ds/mediroster-design-system-2b97303f-2ccc-4ec2-b021-43f0d3671db6/_ds_bundle.js"></script>
+  <style>
+    html, body { margin: 0; padding: 0; background: #fafbfc; }
+  </style>
+</helmet>
+
+<div data-screen-label="Login" style="min-height: 100vh; display: flex; align-items: center; justify-content: center; background: var(--paper); font-family: var(--font-ui); color: var(--ink); background-image: linear-gradient(var(--grid-line) 1px, transparent 1px), linear-gradient(90deg, var(--grid-line) 1px, transparent 1px); background-size: 96px 96px; background-position: center;">
+
+  <div style="width: 380px;">
+    <div style="display: flex; flex-direction: column; align-items: center; margin-bottom: 22px;">
+      <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="var(--teal-600)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M3 6a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v13a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
+        <path d="M3 9.5h18"></path><path d="M8 2v4"></path><path d="M16 2v4"></path>
+        <path d="M7.5 13.5h5.5" stroke="var(--pen-D-dot)"></path>
+        <path d="M7.5 17h8" stroke="var(--pen-S-dot)"></path>
+      </svg>
+      <div style="font-family: var(--font-display); font-weight: 600; font-size: 30px; letter-spacing: -0.01em; margin-top: 10px;">MediRoster</div>
+      <div style="font-size: 13px; color: var(--ink-secondary); margin-top: 4px;">Duty rosters for Lady Ridgeway Hospital · Paediatrics</div>
+    </div>
+
+    <div style="background: var(--surface); border: 1px solid var(--grid-line); border-radius: 8px; box-shadow: var(--shadow-sm); padding: 26px;">
+      <div style="font-size: 10.5px; font-weight: 600; letter-spacing: 0.04em; color: var(--ink-secondary);">EMAIL</div>
+      <input type="email" value="{{ email }}" onChange="{{ emailChange }}" placeholder="name@health.gov.lk" style="width: 100%; box-sizing: border-box; height: 40px; margin-top: 6px; padding: 0 12px; border: 1px solid var(--grid-line-strong); border-radius: 4px; font-family: var(--font-ui); font-size: 14px; color: var(--ink); background: var(--surface); outline: none;" style-focus="border-color: var(--teal-600); box-shadow: 0 0 0 2px var(--teal-50);">
+
+      <div style="font-size: 10.5px; font-weight: 600; letter-spacing: 0.04em; color: var(--ink-secondary); margin-top: 16px;">PASSWORD</div>
+      <input type="password" value="{{ password }}" onChange="{{ passwordChange }}" placeholder="••••••••" style="width: 100%; box-sizing: border-box; height: 40px; margin-top: 6px; padding: 0 12px; border: 1px solid var(--grid-line-strong); border-radius: 4px; font-family: var(--font-ui); font-size: 14px; color: var(--ink); background: var(--surface); outline: none;" style-focus="border-color: var(--teal-600); box-shadow: 0 0 0 2px var(--teal-50);">
+
+      <sc-if value="{{ errorShow }}" hint-placeholder-val="{{ false }}">
+        <div style="margin-top: 12px; padding: 9px 11px; background: var(--danger-bg); border-radius: 6px; font-size: 12.5px; color: var(--danger);">Enter your email and password to sign in.</div>
+      </sc-if>
+
+      <button onClick="{{ signIn }}" style="width: 100%; height: 40px; margin-top: 18px; border: none; border-radius: 6px; background: var(--teal-600); color: #ffffff; font-family: var(--font-ui); font-size: 14px; font-weight: 600; cursor: pointer; transition: background 120ms;" style-hover="background: var(--teal-700);" style-active="transform: translateY(0.5px);">{{ signInLabel }}</button>
+
+      <div style="margin-top: 14px; font-size: 12px; line-height: 1.5; color: var(--ink-secondary); text-align: center;">Account created by your department admin.<br>No self-signup.</div>
+    </div>
+
+    <div style="margin-top: 18px;">
+      <div style="font-size: 10.5px; font-weight: 600; letter-spacing: 0.04em; color: var(--ink-tertiary); text-align: center; margin-bottom: 9px;">PROTOTYPE — SIGN IN AS</div>
+      <div style="display: flex; gap: 8px;">
+        <button data-role="E1" onClick="{{ quickIn }}" style="flex: 1; display: flex; align-items: center; justify-content: center; gap: 7px; height: 36px; border: 1px solid var(--grid-line); border-radius: 6px; background: var(--surface); font-family: var(--font-ui); font-size: 12.5px; font-weight: 600; color: var(--ink); cursor: pointer; box-shadow: var(--shadow-xs);" style-hover="border-color: var(--pen-G-dot);">
+          <span style="width: 8px; height: 8px; border-radius: 999px; background: var(--pen-G-dot);"></span>Dr. Wasana
+        </button>
+        <button data-role="E2" onClick="{{ quickIn }}" style="flex: 1; display: flex; align-items: center; justify-content: center; gap: 7px; height: 36px; border: 1px solid var(--grid-line); border-radius: 6px; background: var(--surface); font-family: var(--font-ui); font-size: 12.5px; font-weight: 600; color: var(--ink); cursor: pointer; box-shadow: var(--shadow-xs);" style-hover="border-color: var(--pen-Rt-dot);">
+          <span style="width: 8px; height: 8px; border-radius: 999px; background: var(--pen-Rt-dot);"></span>Ruwanda
+        </button>
+        <button data-role="ADMIN" onClick="{{ quickIn }}" style="flex: 1; display: flex; align-items: center; justify-content: center; gap: 7px; height: 36px; border: 1px solid var(--grid-line); border-radius: 6px; background: var(--surface); font-family: var(--font-ui); font-size: 12.5px; font-weight: 600; color: var(--ink); cursor: pointer; box-shadow: var(--shadow-xs);" style-hover="border-color: var(--ink-secondary);">
+          <span style="width: 8px; height: 8px; border-radius: 999px; background: var(--ink-tertiary);"></span>Admin
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+class Component extends DCLogic {
+  state = { email: "", password: "", error: false, busy: false };
+
+  emailChange = (e) => this.setState({ email: e.target.value, error: false });
+  passwordChange = (e) => this.setState({ password: e.target.value, error: false });
+
+  signIn = () => {
+    if (!this.state.email || !this.state.password) { this.setState({ error: true }); return; }
+    this.go("E2");
+  };
+
+  quickIn = (e) => this.go(e.currentTarget.getAttribute("data-role"));
+
+  go(role) {
+    this.setState({ busy: true });
+    import("./data/mura-data.js").then((M) => {
+      M.setRole(role);
+      setTimeout(() => { window.location.href = "Dashboard.dc.html"; }, 350);
+    });
+  }
+
+  renderVals() {
+    return {
+      email: this.state.email,
+      password: this.state.password,
+      emailChange: this.emailChange,
+      passwordChange: this.passwordChange,
+      errorShow: this.state.error,
+      signIn: this.signIn,
+      quickIn: this.quickIn,
+      signInLabel: this.state.busy ? "Signing in…" : "Sign in",
+    };
+  }
+}
+
+</script>
+</body>
+</html>

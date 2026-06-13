@@ -1,0 +1,117 @@
+{
+  "_readme": "Real roster data decoded from paper rosters (Dec 2025 – June 2026). Use as unit-test fixtures for the generator and validators. June 2026 is complete for BOTH layers — the gold standard: a correct generator + the documented swaps should be able to produce rosters with these statistical properties, and the validators must report ZERO violations on these.",
+
+  "consultants": [
+    { "shortCode": "R", "fullName": "Dr. Lal Rathnasiri", "colorKey": "pen-black" },
+    { "shortCode": "G", "fullName": "Dr. Gihan", "colorKey": "pen-violet" },
+    { "shortCode": "Pu", "fullName": "Prof Unit", "isSeat": true, "currentHolder": "Dr. Kasun", "colorKey": "pen-green" },
+    { "shortCode": "D", "fullName": "Dr. Dinesha", "colorKey": "pen-red" }
+  ],
+
+  "shoPool": [
+    { "shortCode": "S", "fullName": "Sulakshana", "kind": "RHO", "colorKey": "pen-blue", "activeFrom": "2026-01-01" },
+    { "shortCode": "R", "fullName": "Ruwanda", "kind": "SHO", "colorKey": "pen-teal", "activeFrom": "2026-01-01" },
+    { "shortCode": "M", "fullName": "Mekala", "kind": "RHO", "colorKey": "pen-orange", "activeFrom": "2026-01-01" },
+    { "shortCode": "U", "fullName": "Udara", "kind": "SHO", "colorKey": "pen-pink", "activeFrom": "2026-06-01", "note": "returned from maternity leave June 2026; April/May pool was 3 people" }
+  ],
+
+  "consultantRoster_2026_06": {
+    "layer": "CONSULTANT",
+    "month": "2026-06",
+    "assignments": {
+      "2026-06-01": "R", "2026-06-02": "G", "2026-06-03": "Pu", "2026-06-04": "D",
+      "2026-06-05": "G", "2026-06-06": "R", "2026-06-07": "R", "2026-06-08": "Pu",
+      "2026-06-09": "G", "2026-06-10": "R", "2026-06-11": "Pu", "2026-06-12": "D",
+      "2026-06-13": "G", "2026-06-14": "G", "2026-06-15": "R", "2026-06-16": "D",
+      "2026-06-17": "G", "2026-06-18": "R", "2026-06-19": "Pu", "2026-06-20": "D",
+      "2026-06-21": "D", "2026-06-22": "G", "2026-06-23": "Pu", "2026-06-24": "D",
+      "2026-06-25": "G", "2026-06-26": "R", "2026-06-27": "Pu", "2026-06-28": "Pu",
+      "2026-06-29": "D", "2026-06-30": "R"
+    },
+    "weekendBlocks": [
+      { "dates": ["2026-06-06", "2026-06-07"], "who": "R" },
+      { "dates": ["2026-06-13", "2026-06-14"], "who": "G" },
+      { "dates": ["2026-06-20", "2026-06-21"], "who": "D" },
+      { "dates": ["2026-06-27", "2026-06-28"], "who": "Pu" }
+    ],
+    "expectedTallies": {
+      "totalDays": { "R": 8, "Pu": 7, "D": 7, "G": 8 },
+      "weekendBlocks": { "R": 1, "Pu": 1, "D": 1, "G": 1 }
+    },
+    "previousMonthTail": { "2026-05-31": "Pu" }
+  },
+
+  "shoRoster_2026_06": {
+    "layer": "SHO",
+    "month": "2026-06",
+    "note": "one person per day = on-call; flags on top. cash days == Pu days in consultantRoster_2026_06",
+    "assignments": {
+      "2026-06-01": { "who": "R", "isPostCash": true, "postCashOf": "2026-05-31 (May 31 was Pu / cash)" },
+      "2026-06-02": { "who": "U" },
+      "2026-06-03": { "who": "S", "isCash": true },
+      "2026-06-04": { "who": "R", "isPostCash": true },
+      "2026-06-05": { "who": "S" },
+      "2026-06-06": { "who": "M", "nonCashWeekend": true },
+      "2026-06-07": { "who": "M", "nonCashWeekend": true },
+      "2026-06-08": { "who": "U", "isCash": true },
+      "2026-06-09": { "who": "M", "isPostCash": true },
+      "2026-06-10": { "who": "R" },
+      "2026-06-11": { "who": "S", "isCash": true },
+      "2026-06-12": { "who": "M", "isPostCash": true },
+      "2026-06-13": { "who": "S", "nonCashWeekend": true },
+      "2026-06-14": { "who": "S", "nonCashWeekend": true },
+      "2026-06-15": { "who": "R" },
+      "2026-06-16": { "who": "S" },
+      "2026-06-17": { "who": "M" },
+      "2026-06-18": { "who": "U" },
+      "2026-06-19": { "who": "R", "isCash": true },
+      "2026-06-20": { "who": "U", "isPostCash": true, "nonCashWeekend": true },
+      "2026-06-21": { "who": "U", "nonCashWeekend": true },
+      "2026-06-22": { "who": "R" },
+      "2026-06-23": { "who": "U", "isCash": true },
+      "2026-06-24": { "who": "S", "isPostCash": true },
+      "2026-06-25": { "who": "M" },
+      "2026-06-26": { "who": "U" },
+      "2026-06-27": { "who": "M", "isCash": true, "cashWeekendDay": "saturday" },
+      "2026-06-28": { "who": "R", "isCash": true, "cashWeekendDay": "sunday" },
+      "2026-06-29": { "who": "U", "isPostCash": true },
+      "2026-06-30": { "who": "R" }
+    },
+    "expectedTallies": {
+      "onCalls": { "R": 8, "U": 8, "M": 7, "S": 7 },
+      "cash": { "R": 2, "U": 2, "S": 2, "M": 1 },
+      "postCash": { "R": 2, "U": 2, "M": 2, "S": 1 }
+    },
+    "nonCashWeekendRotation": {
+      "order": ["R", "M", "S", "U"],
+      "carriedFromPreviousMonth": "May last non-cash weekend = R, so June starts at M",
+      "juneSequence": ["M (6-7)", "S (13-14)", "U (20-21)"]
+    }
+  },
+
+  "shoRoster_2026_04_summary": {
+    "note": "April 2026 — pool of 3 (S, R, M; Udara on maternity). From the paper sheet's own tally box.",
+    "cash": { "R": 3, "M": 2, "S": 2 },
+    "postCash": { "R": 1, "M": 2, "S": 3 },
+    "onCalls": { "R": 9, "M": 9, "S": 9 },
+    "lesson": "cash and post-cash inversely compensate (R: 3 cash → 1 post-cash; S: 2 → 3)"
+  },
+
+  "consultant6MonthSummary_Dec2025_May2026": {
+    "casualty": { "R": 46, "Pu": 47, "D": 44, "G": 45 },
+    "weekendCasualty": { "R": 6, "Pu": 8, "D": 6, "G": 4 },
+    "lesson": "cumulative fairness is tracked across months; imbalances (Pu 8 vs G 4 weekends) are what the app should surface and help correct"
+  },
+
+  "generatorAcceptanceTests": [
+    "Validators report 0 violations when run on consultantRoster_2026_06 and shoRoster_2026_06",
+    "Consultant generator for a 4-weekend month assigns exactly 1 weekend block per consultant and 7-8 total days each",
+    "Consultant generator never produces back-to-back days (except within a weekend block), including against previousMonthTail",
+    "SHO generator's cash days exactly equal the consultant roster's Pu days",
+    "SHO generator assigns post-cash on the day after every cash day, to a different person, including across the month boundary",
+    "SHO generator: non-cash weekend = same person Sat+Sun (counts as 2 on-calls); cash weekend = 2 different people; following Monday = post-cash",
+    "SHO generator continues the non-cash weekend rotation from WeekendRotationState",
+    "5-weekend month: generator fills 4 weekend blocks and flags the 5th as needs-decision",
+    "No assignment lands on an UnavailabilityDate or outside activeFrom/activeUntil"
+  ]
+}

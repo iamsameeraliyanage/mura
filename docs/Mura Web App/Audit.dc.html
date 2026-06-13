@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="stylesheet" href="_ds/mediroster-design-system-2b97303f-2ccc-4ec2-b021-43f0d3671db6/tokens/fonts.css">
+  <link rel="stylesheet" href="_ds/mediroster-design-system-2b97303f-2ccc-4ec2-b021-43f0d3671db6/tokens/colors.css">
+  <link rel="stylesheet" href="_ds/mediroster-design-system-2b97303f-2ccc-4ec2-b021-43f0d3671db6/tokens/pen-colors.css">
+  <link rel="stylesheet" href="_ds/mediroster-design-system-2b97303f-2ccc-4ec2-b021-43f0d3671db6/tokens/typography.css">
+  <link rel="stylesheet" href="_ds/mediroster-design-system-2b97303f-2ccc-4ec2-b021-43f0d3671db6/tokens/spacing.css">
+  <link rel="stylesheet" href="_ds/mediroster-design-system-2b97303f-2ccc-4ec2-b021-43f0d3671db6/tokens/base.css">
+  <link rel="stylesheet" href="_ds/mediroster-design-system-2b97303f-2ccc-4ec2-b021-43f0d3671db6/styles.css">
+  <script src="_ds/mediroster-design-system-2b97303f-2ccc-4ec2-b021-43f0d3671db6/_ds_bundle.js"></script>
+  <style>
+    html, body { margin: 0; padding: 0; background: #fafbfc; }
+  </style>
+</helmet>
+
+<div style="display: flex; height: 100vh; overflow: hidden; background: var(--paper); font-family: var(--font-ui); color: var(--ink);">
+
+  <!-- Sidebar -->
+  <aside style="width: 236px; flex-shrink: 0; display: flex; flex-direction: column; background: var(--surface); border-right: 1px solid var(--grid-line);">
+    <div style="display: flex; align-items: center; gap: 10px; padding: 20px 18px 6px 18px;">
+      <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="var(--teal-600)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M3 6a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v13a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
+        <path d="M3 9.5h18"></path><path d="M8 2v4"></path><path d="M16 2v4"></path>
+        <path d="M7.5 13.5h5.5" stroke="var(--pen-D-dot)"></path>
+        <path d="M7.5 17h8" stroke="var(--pen-S-dot)"></path>
+      </svg>
+      <span style="font-family: var(--font-display); font-weight: 600; font-size: 19px; letter-spacing: -0.01em;">MediRoster</span>
+    </div>
+    <div style="padding: 4px 18px 16px 54px; font-size: 10.5px; font-weight: 600; letter-spacing: 0.04em; color: var(--ink-tertiary);">LRH · PAEDIATRICS</div>
+    <nav style="display: flex; flex-direction: column; gap: 2px; padding: 4px 10px; flex: 1; overflow-y: auto;">
+      <sc-for list="{{ nav }}" as="n" hint-placeholder-count="8">
+        <a href="{{ n.href }}" style="display: flex; align-items: center; gap: 11px; height: 38px; padding: 0 12px; border-radius: 6px; text-decoration: none; white-space: nowrap; font-size: 13.5px; font-weight: {{ n.weight }}; color: {{ n.color }}; background: {{ n.bg }}; transition: background 120ms;" style-hover="background: var(--teal-50);">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="{{ n.icon }}"></path></svg>
+          <span>{{ n.label }}</span>
+        </a>
+      </sc-for>
+    </nav>
+    <div style="padding: 14px; border-top: 1px solid var(--grid-line);">
+      <div style="font-size: 10.5px; font-weight: 600; letter-spacing: 0.04em; color: var(--ink-tertiary); margin-bottom: 8px;">VIEWING AS</div>
+      <div style="display: flex; flex-direction: column; gap: 4px;">
+        <sc-for list="{{ roles }}" as="r" hint-placeholder-count="3">
+          <button data-role="{{ r.key }}" onClick="{{ switchRole }}" style="display: flex; align-items: center; gap: 9px; padding: 7px 9px; border-radius: 6px; border: 1px solid {{ r.border }}; background: {{ r.bg }}; cursor: pointer; text-align: left; font-family: var(--font-ui); width: 100%;" style-hover="border-color: var(--grid-line-strong);">
+            <span style="width: 24px; height: 24px; border-radius: 999px; background: {{ r.dotBg }}; color: {{ r.dotInk }}; font-size: 10.5px; font-weight: 700; display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0;">{{ r.initial }}</span>
+            <span style="flex: 1; min-width: 0;">
+              <span style="display: block; font-size: 12.5px; font-weight: 600; color: var(--ink);">{{ r.label }}</span>
+              <span style="display: block; font-size: 10.5px; color: var(--ink-secondary);">{{ r.caption }}</span>
+            </span>
+            <span style="color: var(--teal-600); font-size: 13px; font-weight: 700;">{{ r.check }}</span>
+          </button>
+        </sc-for>
+      </div>
+    </div>
+  </aside>
+
+  <!-- Main -->
+  <main data-screen-label="Audit trail" style="flex: 1; min-width: 0; overflow-y: auto;">
+    <div style="max-width: 1040px; padding: 30px 28px 44px 28px;">
+
+      <div style="font-size: 11px; font-weight: 600; letter-spacing: 0.04em; color: var(--ink-secondary);">AUDIT TRAIL · EVERY CHANGE, FOREVER</div>
+      <h1 style="margin: 6px 0 0 0; font-family: var(--font-display); font-weight: 600; font-size: 36px; letter-spacing: -0.01em; line-height: 1.1;">Who changed what, when</h1>
+      <div style="margin-top: 7px; font-family: var(--font-mono); font-size: 12px; color: var(--ink-secondary);">{{ countLine }}</div>
+
+      <!-- Filters -->
+      <div style="display: flex; gap: 6px; margin-top: 20px;">
+        <sc-for list="{{ filters }}" as="f" hint-placeholder-count="6">
+          <button data-key="{{ f.key }}" onClick="{{ filterClick }}" style="height: 30px; padding: 0 13px; border: 1px solid {{ f.border }}; border-radius: 6px; background: {{ f.bg }}; font-family: var(--font-ui); font-size: 12.5px; font-weight: 600; color: {{ f.color }}; cursor: pointer; transition: background 120ms, border-color 120ms;" style-hover="border-color: var(--teal-600);">{{ f.label }}</button>
+        </sc-for>
+      </div>
+
+      <!-- Log -->
+      <div style="margin-top: 16px; background: var(--surface); border: 1px solid var(--grid-line); border-radius: 8px; box-shadow: var(--shadow-xs); overflow: hidden;">
+        <div style="display: flex; gap: 12px; padding: 9px 16px; border-bottom: 1px solid var(--grid-line); font-size: 10px; font-weight: 600; letter-spacing: 0.04em; color: var(--ink-tertiary);">
+          <span style="width: 96px;">WHEN</span>
+          <span style="width: 120px;">WHO</span>
+          <span style="width: 86px;">ACTION</span>
+          <span style="flex: 1;">DETAIL</span>
+          <span style="width: 150px;">BEFORE → AFTER</span>
+        </div>
+        <sc-for list="{{ rows }}" as="a" hint-placeholder-count="8">
+          <div style="display: flex; gap: 12px; align-items: flex-start; padding: 12px 16px; border-bottom: 1px solid var(--grid-line); transition: background 120ms;" style-hover="background: var(--surface-sunken);">
+            <span style="width: 96px; font-family: var(--font-mono); font-size: 11.5px; color: var(--ink-secondary); padding-top: 2px;">{{ a.at }}</span>
+            <span style="width: 120px; min-width: 0;">
+              <span style="display: block; font-size: 13px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{ a.who }}</span>
+              <span style="display: block; font-size: 10.5px; color: var(--ink-tertiary); white-space: nowrap;">{{ a.role }}</span>
+            </span>
+            <span style="width: 86px; padding-top: 1px;">
+              <span style="display: inline-flex; align-items: center; height: 20px; padding: 0 8px; font-size: 10px; font-weight: 700; letter-spacing: 0.04em; color: {{ a.ink }}; background: {{ a.bg }}; border-radius: 4px;">{{ a.action }}</span>
+            </span>
+            <span style="flex: 1; min-width: 0;">
+              <span style="display: block; font-size: 13px; line-height: 1.45;">{{ a.detail }}</span>
+              <span style="display: block; font-size: 11.5px; color: var(--ink-secondary); margin-top: 2px;">{{ a.rosterLine }}</span>
+            </span>
+            <span style="width: 150px; font-family: var(--font-mono); font-size: 11.5px; padding-top: 2px; color: var(--ink-secondary);">
+              <span style="color: var(--danger); text-decoration: line-through; text-decoration-thickness: 1px;">{{ a.before }}</span>
+              <span style="color: var(--ink-tertiary);"> → </span>
+              <span style="color: var(--published-ink); font-weight: 700;">{{ a.after }}</span>
+            </span>
+          </div>
+        </sc-for>
+      </div>
+
+      <div style="margin-top: 12px; font-size: 11.5px; color: var(--ink-tertiary);">Audit rows are written on every mutation and are never deleted — they survive staff turnover and roster re-publishes.</div>
+    </div>
+  </main>
+</div>
+
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+class Component extends DCLogic {
+  state = { ready: false, role: "E1", filter: "all" };
+
+  async componentDidMount() {
+    const M = await import("./data/mura-data.js");
+    this._M = M;
+    this.setState({ ready: true, role: M.getRole() });
+  }
+
+  switchRole = (e) => {
+    const r = e.currentTarget.getAttribute("data-role");
+    this._M.setRole(r);
+    this.setState({ role: r });
+  };
+
+  filterClick = (e) => this.setState({ filter: e.currentTarget.getAttribute("data-key") });
+
+  renderVals() {
+    const st = this.state;
+    if (!st.ready) return {};
+    const M = this._M;
+
+    const nav = M.NAV.filter((n) => n.roles.indexOf(st.role) >= 0).map((n) => ({
+      ...n,
+      weight: n.id === "audit" ? 600 : 500,
+      color: n.id === "audit" ? "var(--teal-700)" : "var(--ink-secondary)",
+      bg: n.id === "audit" ? "var(--teal-50)" : "transparent",
+    }));
+    const roleDots = { ADMIN: ["var(--surface-sunken)", "var(--ink-secondary)"], E1: ["var(--pen-G-bg)", "var(--pen-G-ink)"], E2: ["var(--pen-Rt-bg)", "var(--pen-Rt-ink)"] };
+    const roles = ["ADMIN", "E1", "E2"].map((k) => ({
+      key: k, label: M.ROLES[k].label, caption: M.ROLES[k].caption,
+      initial: M.ROLES[k].label.replace("Dr. ", "").slice(0, 1),
+      dotBg: roleDots[k][0], dotInk: roleDots[k][1],
+      border: st.role === k ? "var(--teal-600)" : "var(--grid-line)",
+      bg: st.role === k ? "var(--teal-50)" : "var(--surface)",
+      check: st.role === k ? "✓" : "",
+    }));
+
+    const defs = [
+      { key: "all", label: "All" },
+      { key: "publish", label: "Publishes" },
+      { key: "swap", label: "Swaps" },
+      { key: "generate", label: "Generates" },
+      { key: "unavail", label: "Unavailability" },
+      { key: "config", label: "Config" },
+    ];
+    const filters = defs.map((f) => ({
+      ...f,
+      border: st.filter === f.key ? "var(--teal-600)" : "var(--grid-line)",
+      bg: st.filter === f.key ? "var(--teal-50)" : "var(--surface)",
+      color: st.filter === f.key ? "var(--teal-700)" : "var(--ink-secondary)",
+    }));
+
+    const styleMap = {
+      publish: ["var(--published-ink)", "var(--published-bg)", "PUBLISH"],
+      generate: ["var(--draft-ink)", "var(--draft-bg)", "GENERATE"],
+      swap: ["var(--teal-700)", "var(--teal-50)", "SWAP"],
+      unavail: ["var(--cash-ink)", "var(--cash-bg)", "UNAVAIL"],
+      config: ["var(--ink-secondary)", "var(--surface-sunken)", "CONFIG"],
+    };
+
+    const filtered = M.AUDIT.filter((a) => st.filter === "all" || a.action === st.filter);
+    const rows = filtered.map((a) => {
+      const s = styleMap[a.action] || styleMap.config;
+      return {
+        at: a.at, who: a.who, role: a.role,
+        action: s[2], ink: s[0], bg: s[1],
+        detail: a.detail + (a.reason ? " — " + a.reason : ""),
+        rosterLine: a.roster,
+        before: a.before, after: a.after,
+      };
+    });
+
+    return {
+      nav, roles, switchRole: this.switchRole,
+      filters, filterClick: this.filterClick,
+      rows,
+      countLine: rows.length + " OF " + M.AUDIT.length + " ENTRIES · MAY 24 – JUN 10, 2026",
+    };
+  }
+}
+
+</script>
+</body>
+</html>

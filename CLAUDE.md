@@ -12,6 +12,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - [docs/02-tech-architecture.md](docs/02-tech-architecture.md) — stack, project structure, API surface, deployment.
 - [docs/03-database-schema.prisma](docs/03-database-schema.prisma) — schema reference (source of truth once built: `prisma/schema.prisma`).
 - [docs/04-design-system.md](docs/04-design-system.md) — Tailwind v4 tokens and component specs.
+- `docs/Mura Web App/` — **the authoritative UI design**: MediRoster design system (`_ds/.../readme.md` + `tokens/*.css`) and one `*.dc.html` mockup per screen (Login, Dashboard, Consultant/SHO rosters, Fairness, Staff, Unavailability, Audit, Share, Mobile). The SPA must match these screens; tokens live in `src/styles/index.css`. The product is branded **MediRoster** in the UI.
 - [docs/05-test-fixtures.json](docs/05-test-fixtures.json) — real paper-roster data (Dec 2025 – June 2026); generators and validators must satisfy `generatorAcceptanceTests`.
 - [docs/06-build-plan-and-claude-md.md](docs/06-build-plan-and-claude-md.md) — milestone build plan (M0–M8).
 
@@ -91,7 +92,7 @@ shared/
 2. **One DutySlot per day per roster.** The assigned person IS the on-call; `isCash` and `isPostCash` are boolean flags on that slot. Never create separate slots for cash or post-cash.
 3. **Every mutation writes an AuditLog row** (userId, action, entity, entityId, before, after).
 4. **Real UTC timestamps; render in Asia/Colombo.** Shifts cross midnight and month boundaries — `startsAt`/`endsAt` are full datetimes.
-5. **No self-signup.** Admin creates users. `ADMIN | CONSULTANT_EDITOR | SHO_EDITOR` roles enforced in middleware (`requireRole`) _and_ hidden in UI. Editors are scoped to a unit.
+5. **No self-signup; admins mint accounts one level below themselves.** Role hierarchy `SUPER_ADMIN → HOSPITAL_ADMIN (hospitalId) → DEPARTMENT_ADMIN (departmentId) → ROSTER_ADMIN (unitId + rosterLayers[])`, enforced in `server/middleware/auth.ts` (`canManageHospital/Department`, `canEditRoster`, `visibleUnitsWhere`) _and_ reflected in the UI (the sidebar scope switcher shows only the caller's subtree). A **roster type** = one `DutyConfig` row (unit + layer + poolKinds): `CONSULTANT` uses the consultant generator, every other layer (`SHO|HO|MO|NURSE`) uses the pool generator — cash linkage and the consultant-publish gate are SHO-only. Pool generation needs ≥3 active people.
 6. **Pen colors from tokens only.** `StaffMember.colorKey` maps to `--color-pen-*` design tokens. Never hardcode hex values in components.
 7. **`shared/` is the single source of truth** for types and Zod schemas — imported by both `src/` and `server/`.
 8. **SHO roster unlocks only after the consultant roster is PUBLISHED** for that month.

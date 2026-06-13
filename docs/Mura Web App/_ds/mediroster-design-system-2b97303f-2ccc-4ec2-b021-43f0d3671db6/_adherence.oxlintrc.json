@@ -1,0 +1,366 @@
+{
+  "plugins": [
+    "react",
+    "import"
+  ],
+  "rules": {
+    "react/forbid-elements": [
+      "warn",
+      {
+        "forbid": []
+      }
+    ],
+    "no-restricted-imports": [
+      "warn",
+      {
+        "patterns": [
+          {
+            "group": [
+              "components/buttons/**",
+              "components/calendar/**",
+              "components/chips/**",
+              "components/fairness/**",
+              "components/feedback/**",
+              "components/navigation/**",
+              "ui_kits/mediroster/**"
+            ],
+            "message": "Import design-system components from 'index.js', not component internals."
+          }
+        ]
+      }
+    ],
+    "no-restricted-syntax": [
+      "warn",
+      {
+        "selector": "Literal[value=/#[0-9a-fA-F]{3,8}\\b/]",
+        "message": "Raw hex color — use a design-system color token via var()."
+      },
+      {
+        "selector": "Literal[value=/\\b\\d+px\\b/]",
+        "message": "Raw px value — use a design-system spacing token via var()."
+      },
+      {
+        "selector": "Literal[value=/font-family\\s*:\\s*(?!['\\\"]?(?:Fraunces|Inter|JetBrains Mono))/i]",
+        "message": "Font not provided by the design system. Available: Fraunces, Inter, JetBrains Mono."
+      },
+      {
+        "selector": "JSXOpeningElement[name.name='CalendarCell'] > JSXAttribute > JSXIdentifier[name!=/^(?:day|pen|label|secondaryPen|secondaryLabel|flags|conflict|weekend|holiday|today|muted|onClick|children|style|key|ref|className|style|children)$/]",
+        "message": "<CalendarCell> doesn't accept that prop. Declared props: day, pen, label, secondaryPen, secondaryLabel, flags, conflict, weekend, holiday, today, muted, onClick, children, style."
+      },
+      {
+        "selector": "JSXOpeningElement[name.name='PenMeta'] > JSXAttribute > JSXIdentifier[name!=/^(?:label|ink|bg|dot|name|key|ref|className|style|children)$/]",
+        "message": "<PenMeta> doesn't accept that prop. Declared props: label, ink, bg, dot, name."
+      },
+      {
+        "selector": "JSXOpeningElement[name.name='FairnessTallies'] > JSXAttribute > JSXIdentifier[name!=/^(?:onCall|cash|postCash|weekend|key|ref|className|style|children)$/]",
+        "message": "<FairnessTallies> doesn't accept that prop. Declared props: onCall, cash, postCash, weekend."
+      },
+      {
+        "selector": "JSXOpeningElement[name.name='FlagBadge'] > JSXAttribute > JSXIdentifier[name!=/^(?:type|label|withText|style|key|ref|className|style|children)$/]",
+        "message": "<FlagBadge> doesn't accept that prop. Declared props: type, label, withText, style."
+      },
+      {
+        "selector": "JSXOpeningElement[name.name='FlagBadge'] > JSXAttribute[name.name='type'] > Literal[value!=/^(?:cash|postcash|conflict)$/]",
+        "message": "<FlagBadge> type must be one of 'cash' | 'postcash' | 'conflict'."
+      },
+      {
+        "selector": "JSXOpeningElement[name.name='MonthGrid'] > JSXAttribute > JSXIdentifier[name!=/^(?:days|compact|onCellClick|style|key|ref|className|style|children)$/]",
+        "message": "<MonthGrid> doesn't accept that prop. Declared props: days, compact, onCellClick, style."
+      },
+      {
+        "selector": "JSXOpeningElement[name.name='NavItem'] > JSXAttribute > JSXIdentifier[name!=/^(?:children|icon|active|variant|badge|onClick|style|key|ref|className|style|children)$/]",
+        "message": "<NavItem> doesn't accept that prop. Declared props: children, icon, active, variant, badge, onClick, style."
+      },
+      {
+        "selector": "JSXOpeningElement[name.name='NavItem'] > JSXAttribute[name.name='variant'] > Literal[value!=/^(?:sidebar|bottom)$/]",
+        "message": "<NavItem> variant must be one of 'sidebar' | 'bottom'."
+      },
+      {
+        "selector": "JSXOpeningElement[name.name='PrimaryButton'] > JSXAttribute > JSXIdentifier[name!=/^(?:children|variant|size|icon|iconRight|disabled|type|onClick|style|key|ref|className|style|children)$/]",
+        "message": "<PrimaryButton> doesn't accept that prop. Declared props: children, variant, size, icon, iconRight, disabled, type, onClick, style."
+      },
+      {
+        "selector": "JSXOpeningElement[name.name='PrimaryButton'] > JSXAttribute[name.name='variant'] > Literal[value!=/^(?:solid|outline|destructive|ghost)$/]",
+        "message": "<PrimaryButton> variant must be one of 'solid' | 'outline' | 'destructive' | 'ghost'."
+      },
+      {
+        "selector": "JSXOpeningElement[name.name='PrimaryButton'] > JSXAttribute[name.name='size'] > Literal[value!=/^(?:sm|md|lg)$/]",
+        "message": "<PrimaryButton> size must be one of 'sm' | 'md' | 'lg'."
+      },
+      {
+        "selector": "JSXOpeningElement[name.name='PrimaryButton'] > JSXAttribute[name.name='type'] > Literal[value!=/^(?:button|submit|reset)$/]",
+        "message": "<PrimaryButton> type must be one of 'button' | 'submit' | 'reset'."
+      },
+      {
+        "selector": "JSXOpeningElement[name.name='StatusBadge'] > JSXAttribute > JSXIdentifier[name!=/^(?:status|version|style|key|ref|className|style|children)$/]",
+        "message": "<StatusBadge> doesn't accept that prop. Declared props: status, version, style."
+      },
+      {
+        "selector": "JSXOpeningElement[name.name='StatusBadge'] > JSXAttribute[name.name='status'] > Literal[value!=/^(?:draft|published)$/]",
+        "message": "<StatusBadge> status must be one of 'draft' | 'published'."
+      },
+      {
+        "selector": "JSXOpeningElement[name.name='ValidationAlert'] > JSXAttribute > JSXIdentifier[name!=/^(?:severity|title|description|onJump|jumpLabel|style|key|ref|className|style|children)$/]",
+        "message": "<ValidationAlert> doesn't accept that prop. Declared props: severity, title, description, onJump, jumpLabel, style."
+      },
+      {
+        "selector": "JSXOpeningElement[name.name='ValidationAlert'] > JSXAttribute[name.name='severity'] > Literal[value!=/^(?:warning|error)$/]",
+        "message": "<ValidationAlert> severity must be one of 'warning' | 'error'."
+      }
+    ]
+  },
+  "overrides": [
+    {
+      "files": [
+        "**/index.js"
+      ],
+      "rules": {
+        "no-restricted-imports": "off"
+      }
+    }
+  ],
+  "x-omelette": {
+    "components": {
+      "CalendarCell": {
+        "replaces": []
+      },
+      "PenMeta": {
+        "replaces": []
+      },
+      "FairnessTallies": {
+        "replaces": []
+      },
+      "FlagBadge": {
+        "replaces": []
+      },
+      "MonthGrid": {
+        "replaces": []
+      },
+      "NavItem": {
+        "replaces": []
+      },
+      "PrimaryButton": {
+        "replaces": []
+      },
+      "StatusBadge": {
+        "replaces": []
+      },
+      "ValidationAlert": {
+        "replaces": []
+      }
+    },
+    "tokens": [
+      "--bar-balanced",
+      "--bar-over",
+      "--bar-track",
+      "--bar-under",
+      "--border-hair",
+      "--border-strong",
+      "--cash-bg",
+      "--cash-ink",
+      "--cell-min-h",
+      "--container-max",
+      "--danger",
+      "--danger-bg",
+      "--danger-ring",
+      "--display-lg",
+      "--display-md",
+      "--display-sm",
+      "--draft-bg",
+      "--draft-ink",
+      "--dur-base",
+      "--dur-fast",
+      "--ease-standard",
+      "--fairness-w",
+      "--font-display",
+      "--font-mono",
+      "--font-ui",
+      "--grid-line",
+      "--grid-line-strong",
+      "--holiday-bg",
+      "--ink",
+      "--ink-on-accent",
+      "--ink-secondary",
+      "--ink-tertiary",
+      "--leading-normal",
+      "--leading-snug",
+      "--leading-tight",
+      "--paper",
+      "--pen-D-bg",
+      "--pen-D-dot",
+      "--pen-D-ink",
+      "--pen-G-bg",
+      "--pen-G-dot",
+      "--pen-G-ink",
+      "--pen-M-bg",
+      "--pen-M-dot",
+      "--pen-M-ink",
+      "--pen-Pu-bg",
+      "--pen-Pu-dot",
+      "--pen-Pu-ink",
+      "--pen-R-bg",
+      "--pen-R-dot",
+      "--pen-R-ink",
+      "--pen-Rt-bg",
+      "--pen-Rt-dot",
+      "--pen-Rt-ink",
+      "--pen-S-bg",
+      "--pen-S-dot",
+      "--pen-S-ink",
+      "--pen-U-bg",
+      "--pen-U-dot",
+      "--pen-U-ink",
+      "--postcash-bg",
+      "--postcash-ink",
+      "--published-bg",
+      "--published-ink",
+      "--radius-chip",
+      "--radius-lg",
+      "--radius-md",
+      "--radius-pill",
+      "--radius-sm",
+      "--ring-width",
+      "--shadow-lift",
+      "--shadow-sm",
+      "--shadow-xs",
+      "--sidebar-w",
+      "--space-1",
+      "--space-10",
+      "--space-12",
+      "--space-2",
+      "--space-3",
+      "--space-4",
+      "--space-5",
+      "--space-6",
+      "--space-8",
+      "--surface",
+      "--surface-sunken",
+      "--teal-50",
+      "--teal-600",
+      "--teal-700",
+      "--teal-ring",
+      "--text-base",
+      "--text-lg",
+      "--text-md",
+      "--text-sm",
+      "--text-xl",
+      "--text-xs",
+      "--tracking-label",
+      "--tracking-tight",
+      "--weekend-bg",
+      "--weight-bold",
+      "--weight-medium",
+      "--weight-regular",
+      "--weight-semibold"
+    ],
+    "tokenKinds": {
+      "--paper": "color",
+      "--surface": "color",
+      "--surface-sunken": "color",
+      "--grid-line": "color",
+      "--grid-line-strong": "color",
+      "--ink": "color",
+      "--ink-secondary": "color",
+      "--ink-tertiary": "color",
+      "--ink-on-accent": "color",
+      "--teal-600": "color",
+      "--teal-700": "color",
+      "--teal-50": "color",
+      "--teal-ring": "color",
+      "--cash-ink": "color",
+      "--cash-bg": "color",
+      "--postcash-ink": "color",
+      "--postcash-bg": "color",
+      "--weekend-bg": "color",
+      "--holiday-bg": "color",
+      "--danger": "color",
+      "--danger-bg": "color",
+      "--danger-ring": "color",
+      "--draft-ink": "color",
+      "--draft-bg": "color",
+      "--published-ink": "color",
+      "--published-bg": "color",
+      "--bar-over": "color",
+      "--bar-under": "color",
+      "--bar-balanced": "color",
+      "--bar-track": "color",
+      "--pen-R-ink": "color",
+      "--pen-R-bg": "color",
+      "--pen-R-dot": "color",
+      "--pen-G-ink": "color",
+      "--pen-G-bg": "color",
+      "--pen-G-dot": "color",
+      "--pen-Pu-ink": "color",
+      "--pen-Pu-bg": "color",
+      "--pen-Pu-dot": "color",
+      "--pen-D-ink": "color",
+      "--pen-D-bg": "color",
+      "--pen-D-dot": "color",
+      "--pen-S-ink": "color",
+      "--pen-S-bg": "color",
+      "--pen-S-dot": "color",
+      "--pen-Rt-ink": "color",
+      "--pen-Rt-bg": "color",
+      "--pen-Rt-dot": "color",
+      "--pen-M-ink": "color",
+      "--pen-M-bg": "color",
+      "--pen-M-dot": "color",
+      "--pen-U-ink": "color",
+      "--pen-U-bg": "color",
+      "--pen-U-dot": "color",
+      "--font-display": "font",
+      "--font-ui": "font",
+      "--font-mono": "font",
+      "--text-xs": "font",
+      "--text-sm": "font",
+      "--text-base": "font",
+      "--text-md": "font",
+      "--text-lg": "font",
+      "--text-xl": "font",
+      "--display-sm": "spacing",
+      "--display-md": "spacing",
+      "--display-lg": "spacing",
+      "--weight-regular": "font",
+      "--weight-medium": "font",
+      "--weight-semibold": "font",
+      "--weight-bold": "font",
+      "--leading-tight": "font",
+      "--leading-snug": "font",
+      "--leading-normal": "font",
+      "--tracking-label": "font",
+      "--tracking-tight": "font",
+      "--space-1": "spacing",
+      "--space-2": "spacing",
+      "--space-3": "spacing",
+      "--space-4": "spacing",
+      "--space-5": "spacing",
+      "--space-6": "spacing",
+      "--space-8": "spacing",
+      "--space-10": "spacing",
+      "--space-12": "spacing",
+      "--radius-chip": "radius",
+      "--radius-sm": "radius",
+      "--radius-md": "radius",
+      "--radius-lg": "radius",
+      "--radius-pill": "radius",
+      "--border-hair": "color",
+      "--border-strong": "color",
+      "--ring-width": "spacing",
+      "--shadow-xs": "shadow",
+      "--shadow-sm": "shadow",
+      "--shadow-lift": "shadow",
+      "--sidebar-w": "spacing",
+      "--fairness-w": "spacing",
+      "--cell-min-h": "spacing",
+      "--container-max": "spacing",
+      "--ease-standard": "other",
+      "--dur-fast": "other",
+      "--dur-base": "other"
+    },
+    "fontFamilies": [
+      "Fraunces",
+      "Inter",
+      "JetBrains Mono"
+    ]
+  }
+}

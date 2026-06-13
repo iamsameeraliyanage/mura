@@ -1,0 +1,39 @@
+/* ============================================================
+   MediRoster — Base resets & primitives
+   Minimal, opt-in. Sets the charting-paper background and the
+   default ink/sans stack. Utility classes are namespaced mr-*.
+   ============================================================ */
+
+*, *::before, *::after { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  background: var(--paper);
+  color: var(--ink);
+  font-family: var(--font-ui);
+  font-size: var(--text-base);
+  line-height: var(--leading-normal);
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+/* Tabular, aligned numerals everywhere mono is used */
+.mr-mono { font-family: var(--font-mono); font-variant-numeric: tabular-nums; }
+.mr-display { font-family: var(--font-display); font-weight: var(--weight-semibold); letter-spacing: var(--tracking-tight); }
+
+/* Mini uppercase label */
+.mr-label {
+  font-size: var(--text-xs);
+  font-weight: var(--weight-semibold);
+  letter-spacing: var(--tracking-label);
+  text-transform: uppercase;
+  color: var(--ink-secondary);
+}
+
+/* Shared focus ring — scrub teal halo */
+.mr-focusable:focus-visible,
+:where(button, a, input, select, textarea, [tabindex]):focus-visible {
+  outline: var(--ring-width) solid var(--teal-ring);
+  outline-offset: 2px;
+  border-radius: var(--radius-sm);
+}

@@ -8163,10 +8163,10 @@ var coerce = {
 var NEVER = INVALID;
 
 // shared/types.ts
-var ROSTER_LAYERS = ["CONSULTANT", "SHO"];
+var ROSTER_LAYERS = ["CONSULTANT", "SHO", "HO", "MO", "NURSE"];
 var ROSTER_STATUSES = ["DRAFT", "PUBLISHED"];
 var STAFF_KINDS = ["CONSULTANT", "SHO", "RHO", "HO", "MO", "NURSE"];
-var ROLES = ["ADMIN", "CONSULTANT_EDITOR", "SHO_EDITOR"];
+var ROLES = ["SUPER_ADMIN", "HOSPITAL_ADMIN", "DEPARTMENT_ADMIN", "ROSTER_ADMIN"];
 
 // shared/schemas.ts
 var rosterLayerSchema = external_exports.enum(ROSTER_LAYERS);
@@ -8210,18 +8210,35 @@ var staffCreateSchema = external_exports.object({
   activeUntil: dateStringSchema.nullable().optional()
 });
 var staffUpdateSchema = staffCreateSchema.omit({ unitId: true }).partial();
+var userScopeShape = {
+  hospitalId: external_exports.string().nullable().optional(),
+  departmentId: external_exports.string().nullable().optional(),
+  unitId: external_exports.string().nullable().optional(),
+  rosterLayers: external_exports.array(rosterLayerSchema).optional(),
+  staffId: external_exports.string().nullable().optional()
+};
+function checkUserScope(v, ctx) {
+  if (v.role === "HOSPITAL_ADMIN" && !v.hospitalId)
+    ctx.addIssue({ code: "custom", message: "A hospital admin needs a hospital" });
+  if (v.role === "DEPARTMENT_ADMIN" && !v.departmentId)
+    ctx.addIssue({ code: "custom", message: "A department admin needs a department" });
+  if (v.role === "ROSTER_ADMIN" && (!v.unitId || !v.rosterLayers?.length))
+    ctx.addIssue({ code: "custom", message: "A roster admin needs a ward and at least one roster" });
+}
 var userCreateSchema = external_exports.object({
   email: external_exports.string().email(),
   password: external_exports.string().min(8),
   displayName: external_exports.string().min(1),
   role: roleSchema,
-  unitId: external_exports.string().nullable().optional()
-});
+  ...userScopeShape
+}).superRefine(checkUserScope);
 var userUpdateSchema = external_exports.object({
   password: external_exports.string().min(8).optional(),
   displayName: external_exports.string().min(1).optional(),
   role: roleSchema.optional(),
-  unitId: external_exports.string().nullable().optional()
+  ...userScopeShape
+}).superRefine((v, ctx) => {
+  if (v.role) checkUserScope(v, ctx);
 });
 var dutyConfigUpsertSchema = external_exports.object({
   unitId: external_exports.string().min(1),
@@ -9578,16 +9595,26 @@ var isProduction = () => process.env.VERCEL_ENV === "production";
 // server/lib/jwt.ts
 var secret = () => new TextEncoder().encode(requireEnv("JWT_SECRET"));
 async function signAuthToken(payload) {
-  return new SignJWT({ role: payload.role, unitId: payload.unitId }).setProtectedHeader({ alg: "HS256" }).setSubject(payload.sub).setIssuedAt().setExpirationTime("7d").sign(secret());
+  return new SignJWT({
+    role: payload.role,
+    hospitalId: payload.hospitalId,
+    departmentId: payload.departmentId,
+    unitId: payload.unitId,
+    rosterLayers: payload.rosterLayers
+  }).setProtectedHeader({ alg: "HS256" }).setSubject(payload.sub).setIssuedAt().setExpirationTime("7d").sign(secret());
 }
 async function verifyAuthToken(token) {
   try {
     const { payload } = await jwtVerify(token, secret());
     if (typeof payload.sub !== "string") return null;
+    if (!ROLES.includes(payload.role)) return null;
     return {
       sub: payload.sub,
       role: payload.role,
-      unitId: payload.unitId ?? null
+      hospitalId: payload.hospitalId ?? null,
+      departmentId: payload.departmentId ?? null,
+      unitId: payload.unitId ?? null,
+      rosterLayers: payload.rosterLayers ?? []
     };
   } catch {
     return null;
@@ -9615,13 +9642,67 @@ function requireRole(...roles) {
     await next();
   });
 }
-function assertScope(c, unitId) {
-  const user = c.get("user");
-  if (user.role === "ADMIN") return;
-  if (user.unitId !== unitId) throw new HTTPException(403, { message: "Out of scope" });
+async function getUnitScope(unitId) {
+  const unit = await db.unit.findUnique({ where: { id: unitId }, include: { department: true } });
+  if (!unit) throw new HTTPException(404, { message: "Ward not found" });
+  return { unitId: unit.id, departmentId: unit.departmentId, hospitalId: unit.department.hospitalId };
+}
+function canManageHospital(user, hospitalId) {
+  if (user.role === "SUPER_ADMIN") return true;
+  return user.role === "HOSPITAL_ADMIN" && user.hospitalId === hospitalId;
+}
+function canManageDepartment(user, scope) {
+  if (canManageHospital(user, scope.hospitalId)) return true;
+  return user.role === "DEPARTMENT_ADMIN" && user.departmentId === scope.departmentId;
+}
+function canViewUnit(user, scope) {
+  if (canManageDepartment(user, scope)) return true;
+  return user.role === "ROSTER_ADMIN" && user.unitId === scope.unitId;
+}
+function canEditRoster(user, scope, layer) {
+  if (canManageDepartment(user, scope)) return true;
+  return user.role === "ROSTER_ADMIN" && user.unitId === scope.unitId && user.rosterLayers.includes(layer);
+}
+async function assertUnitView(c, unitId) {
+  const scope = await getUnitScope(unitId);
+  if (!canViewUnit(c.get("user"), scope)) throw new HTTPException(403, { message: "Out of scope" });
+  return scope;
+}
+async function assertUnitManage(c, unitId) {
+  const scope = await getUnitScope(unitId);
+  if (!canManageDepartment(c.get("user"), scope)) {
+    throw new HTTPException(403, { message: "Out of scope" });
+  }
+  return scope;
+}
+async function assertRosterEdit(c, unitId, layer) {
+  const scope = await getUnitScope(unitId);
+  if (!canEditRoster(c.get("user"), scope, layer)) {
+    throw new HTTPException(403, { message: "You are not an admin of this roster" });
+  }
+  return scope;
+}
+function visibleUnitsWhere(user) {
+  switch (user.role) {
+    case "SUPER_ADMIN":
+      return void 0;
+    case "HOSPITAL_ADMIN":
+      return { department: { hospitalId: user.hospitalId ?? "__none__" } };
+    case "DEPARTMENT_ADMIN":
+      return { departmentId: user.departmentId ?? "__none__" };
+    case "ROSTER_ADMIN":
+      return { id: user.unitId ?? "__none__" };
+  }
 }
 function toUser(payload) {
-  return { id: payload.sub, role: payload.role, unitId: payload.unitId };
+  return {
+    id: payload.sub,
+    role: payload.role,
+    hospitalId: payload.hospitalId,
+    departmentId: payload.departmentId,
+    unitId: payload.unitId,
+    rosterLayers: payload.rosterLayers
+  };
 }
 
 // server/routes/auth.ts
@@ -9632,7 +9713,14 @@ authRoutes.post("/login", zValidator("json", loginSchema), async (c) => {
   if (!user || !await bcryptjs_default.compare(password, user.passwordHash)) {
     throw new HTTPException(401, { message: "Invalid email or password" });
   }
-  const token = await signAuthToken({ sub: user.id, role: user.role, unitId: user.unitId });
+  const token = await signAuthToken({
+    sub: user.id,
+    role: user.role,
+    hospitalId: user.hospitalId,
+    departmentId: user.departmentId,
+    unitId: user.unitId,
+    rosterLayers: user.rosterLayers
+  });
   setCookie(c, AUTH_COOKIE, token, {
     httpOnly: true,
     secure: isProduction(),
@@ -9658,7 +9746,11 @@ function publicUser(user) {
     email: user.email,
     displayName: user.displayName,
     role: user.role,
-    unitId: user.unitId
+    hospitalId: user.hospitalId,
+    departmentId: user.departmentId,
+    unitId: user.unitId,
+    rosterLayers: user.rosterLayers,
+    staffId: user.staffId
   };
 }
 
@@ -9678,44 +9770,87 @@ function writeAudit(input) {
 
 // server/routes/admin.ts
 var adminRoutes = new Hono2();
-adminRoutes.use("*", requireAuth, requireRole("ADMIN"));
+adminRoutes.use("*", requireAuth);
 var day2 = (d) => /* @__PURE__ */ new Date(`${d}T00:00:00.000Z`);
 adminRoutes.get("/hospitals", async (c) => {
+  const user = c.get("user");
+  const include = (departmentsWhere, unitsWhere) => ({
+    departments: {
+      where: departmentsWhere,
+      include: { units: { where: unitsWhere, orderBy: { createdAt: "asc" } } },
+      orderBy: { createdAt: "asc" }
+    }
+  });
+  if (user.role === "SUPER_ADMIN") {
+    return c.json(await db.hospital.findMany({ include: include(), orderBy: { createdAt: "asc" } }));
+  }
+  if (user.role === "HOSPITAL_ADMIN") {
+    return c.json(
+      await db.hospital.findMany({
+        where: { id: user.hospitalId ?? "__none__" },
+        include: include()
+      })
+    );
+  }
+  if (user.role === "DEPARTMENT_ADMIN") {
+    return c.json(
+      await db.hospital.findMany({
+        where: { departments: { some: { id: user.departmentId ?? "__none__" } } },
+        include: include({ id: user.departmentId ?? "__none__" })
+      })
+    );
+  }
+  if (!user.unitId) return c.json([]);
+  const scope = await getUnitScope(user.unitId);
   return c.json(
     await db.hospital.findMany({
-      include: { departments: { include: { units: true } } },
-      orderBy: { createdAt: "asc" }
+      where: { id: scope.hospitalId },
+      include: include({ id: scope.departmentId }, { id: scope.unitId })
     })
   );
 });
-adminRoutes.post("/hospitals", zValidator("json", hospitalCreateSchema), async (c) => {
-  const hospital = await db.hospital.create({ data: c.req.valid("json") });
-  await writeAudit({
-    userId: c.get("user").id,
-    action: "CREATE",
-    entity: "Hospital",
-    entityId: hospital.id,
-    after: hospital
-  });
-  return c.json(hospital, 201);
-});
-adminRoutes.patch("/hospitals/:id", zValidator("json", hospitalUpdateSchema), async (c) => {
-  const id = c.req.param("id");
-  const before = await db.hospital.findUnique({ where: { id } });
-  if (!before) throw new HTTPException(404, { message: "Hospital not found" });
-  const after = await db.hospital.update({ where: { id }, data: c.req.valid("json") });
-  await writeAudit({
-    userId: c.get("user").id,
-    action: "UPDATE",
-    entity: "Hospital",
-    entityId: id,
-    before,
-    after
-  });
-  return c.json(after);
-});
+adminRoutes.post(
+  "/hospitals",
+  requireRole("SUPER_ADMIN"),
+  zValidator("json", hospitalCreateSchema),
+  async (c) => {
+    const hospital = await db.hospital.create({ data: c.req.valid("json") });
+    await writeAudit({
+      userId: c.get("user").id,
+      action: "CREATE",
+      entity: "Hospital",
+      entityId: hospital.id,
+      after: hospital
+    });
+    return c.json(hospital, 201);
+  }
+);
+adminRoutes.patch(
+  "/hospitals/:id",
+  requireRole("SUPER_ADMIN"),
+  zValidator("json", hospitalUpdateSchema),
+  async (c) => {
+    const id = c.req.param("id");
+    const before = await db.hospital.findUnique({ where: { id } });
+    if (!before) throw new HTTPException(404, { message: "Hospital not found" });
+    const after = await db.hospital.update({ where: { id }, data: c.req.valid("json") });
+    await writeAudit({
+      userId: c.get("user").id,
+      action: "UPDATE",
+      entity: "Hospital",
+      entityId: id,
+      before,
+      after
+    });
+    return c.json(after);
+  }
+);
 adminRoutes.post("/departments", zValidator("json", departmentCreateSchema), async (c) => {
-  const department = await db.department.create({ data: c.req.valid("json") });
+  const input = c.req.valid("json");
+  if (!canManageHospital(c.get("user"), input.hospitalId)) {
+    throw new HTTPException(403, { message: "Out of scope" });
+  }
+  const department = await db.department.create({ data: input });
   await writeAudit({
     userId: c.get("user").id,
     action: "CREATE",
@@ -9729,6 +9864,9 @@ adminRoutes.patch("/departments/:id", zValidator("json", departmentUpdateSchema)
   const id = c.req.param("id");
   const before = await db.department.findUnique({ where: { id } });
   if (!before) throw new HTTPException(404, { message: "Department not found" });
+  if (!canManageHospital(c.get("user"), before.hospitalId)) {
+    throw new HTTPException(403, { message: "Out of scope" });
+  }
   const after = await db.department.update({ where: { id }, data: c.req.valid("json") });
   await writeAudit({
     userId: c.get("user").id,
@@ -9741,7 +9879,16 @@ adminRoutes.patch("/departments/:id", zValidator("json", departmentUpdateSchema)
   return c.json(after);
 });
 adminRoutes.post("/units", zValidator("json", unitCreateSchema), async (c) => {
-  const unit = await db.unit.create({ data: c.req.valid("json") });
+  const input = c.req.valid("json");
+  const department = await db.department.findUnique({ where: { id: input.departmentId } });
+  if (!department) throw new HTTPException(404, { message: "Department not found" });
+  if (!canManageDepartment(c.get("user"), {
+    departmentId: department.id,
+    hospitalId: department.hospitalId
+  })) {
+    throw new HTTPException(403, { message: "Out of scope" });
+  }
+  const unit = await db.unit.create({ data: input });
   await writeAudit({
     userId: c.get("user").id,
     action: "CREATE",
@@ -9755,6 +9902,7 @@ adminRoutes.patch("/units/:id", zValidator("json", unitUpdateSchema), async (c) 
   const id = c.req.param("id");
   const before = await db.unit.findUnique({ where: { id } });
   if (!before) throw new HTTPException(404, { message: "Unit not found" });
+  await assertUnitManage(c, id);
   const after = await db.unit.update({ where: { id }, data: c.req.valid("json") });
   await writeAudit({
     userId: c.get("user").id,
@@ -9768,6 +9916,7 @@ adminRoutes.patch("/units/:id", zValidator("json", unitUpdateSchema), async (c) 
 });
 adminRoutes.post("/staff", zValidator("json", staffCreateSchema), async (c) => {
   const input = c.req.valid("json");
+  await assertUnitManage(c, input.unitId);
   const staff = await db.staffMember.create({
     data: {
       ...input,
@@ -9789,6 +9938,7 @@ adminRoutes.patch("/staff/:id", zValidator("json", staffUpdateSchema), async (c)
   const input = c.req.valid("json");
   const before = await db.staffMember.findUnique({ where: { id } });
   if (!before) throw new HTTPException(404, { message: "Staff member not found" });
+  await assertUnitManage(c, before.unitId);
   const after = await db.staffMember.update({
     where: { id },
     data: {
@@ -9807,43 +9957,123 @@ adminRoutes.patch("/staff/:id", zValidator("json", staffUpdateSchema), async (c)
   });
   return c.json(after);
 });
-adminRoutes.get("/users", async (c) => {
-  const users = await db.user.findMany({
-    select: { id: true, email: true, displayName: true, role: true, unitId: true, createdAt: true },
-    orderBy: { createdAt: "asc" }
-  });
-  return c.json(users);
-});
+var userSelect = {
+  id: true,
+  email: true,
+  displayName: true,
+  role: true,
+  hospitalId: true,
+  departmentId: true,
+  unitId: true,
+  rosterLayers: true,
+  staffId: true,
+  createdAt: true
+};
+async function assertCanGrant(user, target) {
+  switch (target.role) {
+    case "SUPER_ADMIN":
+      if (user.role !== "SUPER_ADMIN") throw new HTTPException(403, { message: "Forbidden" });
+      return;
+    case "HOSPITAL_ADMIN":
+      if (!canManageHospital(user, target.hospitalId)) {
+        throw new HTTPException(403, { message: "Out of scope" });
+      }
+      return;
+    case "DEPARTMENT_ADMIN": {
+      const dept = await db.department.findUnique({ where: { id: target.departmentId } });
+      if (!dept) throw new HTTPException(404, { message: "Department not found" });
+      if (!canManageHospital(user, dept.hospitalId)) {
+        throw new HTTPException(403, { message: "Department admins are assigned by the hospital admin" });
+      }
+      return;
+    }
+    case "ROSTER_ADMIN": {
+      const scope = await getUnitScope(target.unitId);
+      if (!canManageDepartment(user, scope)) {
+        throw new HTTPException(403, { message: "Out of scope" });
+      }
+      return;
+    }
+  }
+}
+function scopeFor(target) {
+  return {
+    hospitalId: target.role === "HOSPITAL_ADMIN" ? target.hospitalId ?? null : null,
+    departmentId: target.role === "DEPARTMENT_ADMIN" ? target.departmentId ?? null : null,
+    unitId: target.role === "ROSTER_ADMIN" ? target.unitId ?? null : null,
+    rosterLayers: target.role === "ROSTER_ADMIN" ? target.rosterLayers ?? [] : [],
+    staffId: target.staffId ?? null
+  };
+}
+adminRoutes.get(
+  "/users",
+  requireRole("SUPER_ADMIN", "HOSPITAL_ADMIN", "DEPARTMENT_ADMIN"),
+  async (c) => {
+    const user = c.get("user");
+    let where;
+    if (user.role === "HOSPITAL_ADMIN") {
+      const h = user.hospitalId ?? "__none__";
+      where = {
+        OR: [
+          { id: user.id },
+          { hospitalId: h },
+          { department: { hospitalId: h } },
+          { unit: { department: { hospitalId: h } } }
+        ]
+      };
+    } else if (user.role === "DEPARTMENT_ADMIN") {
+      const d = user.departmentId ?? "__none__";
+      where = { OR: [{ id: user.id }, { departmentId: d }, { unit: { departmentId: d } }] };
+    }
+    return c.json(
+      await db.user.findMany({ where, select: userSelect, orderBy: { createdAt: "asc" } })
+    );
+  }
+);
 adminRoutes.post("/users", zValidator("json", userCreateSchema), async (c) => {
   const { password, ...rest } = c.req.valid("json");
-  const user = await db.user.create({
-    data: { ...rest, passwordHash: await bcryptjs_default.hash(password, 10) },
-    select: { id: true, email: true, displayName: true, role: true, unitId: true }
+  const user = c.get("user");
+  await assertCanGrant(user, rest);
+  const created = await db.user.create({
+    data: {
+      email: rest.email,
+      displayName: rest.displayName,
+      role: rest.role,
+      ...scopeFor(rest),
+      passwordHash: await bcryptjs_default.hash(password, 10)
+    },
+    select: userSelect
   });
   await writeAudit({
-    userId: c.get("user").id,
+    userId: user.id,
     action: "CREATE",
     entity: "User",
-    entityId: user.id,
-    after: user
+    entityId: created.id,
+    after: created
   });
-  return c.json(user, 201);
+  return c.json(created, 201);
 });
 adminRoutes.patch("/users/:id", zValidator("json", userUpdateSchema), async (c) => {
   const id = c.req.param("id");
   const { password, ...rest } = c.req.valid("json");
-  const before = await db.user.findUnique({
-    where: { id },
-    select: { id: true, email: true, displayName: true, role: true, unitId: true }
-  });
+  const user = c.get("user");
+  const before = await db.user.findUnique({ where: { id }, select: userSelect });
   if (!before) throw new HTTPException(404, { message: "User not found" });
+  await assertCanGrant(user, before);
+  const effective = { ...before, ...rest, role: rest.role ?? before.role };
+  await assertCanGrant(user, effective);
   const after = await db.user.update({
     where: { id },
-    data: { ...rest, ...password ? { passwordHash: await bcryptjs_default.hash(password, 10) } : {} },
-    select: { id: true, email: true, displayName: true, role: true, unitId: true }
+    data: {
+      displayName: rest.displayName,
+      ...rest.role ? { role: rest.role, ...scopeFor(effective) } : {},
+      ...rest.role === void 0 && rest.rosterLayers && before.role === "ROSTER_ADMIN" ? { rosterLayers: rest.rosterLayers } : {},
+      ...password ? { passwordHash: await bcryptjs_default.hash(password, 10) } : {}
+    },
+    select: userSelect
   });
   await writeAudit({
-    userId: c.get("user").id,
+    userId: user.id,
     action: "UPDATE",
     entity: "User",
     entityId: id,
@@ -9854,10 +10084,15 @@ adminRoutes.patch("/users/:id", zValidator("json", userUpdateSchema), async (c) 
 });
 adminRoutes.get("/duty-config", async (c) => {
   const unitId = c.req.query("unitId");
-  return c.json(await db.dutyConfig.findMany({ where: unitId ? { unitId } : void 0 }));
+  if (!unitId) throw new HTTPException(400, { message: "unitId required" });
+  await assertUnitView(c, unitId);
+  return c.json(
+    await db.dutyConfig.findMany({ where: { unitId }, orderBy: { layer: "asc" } })
+  );
 });
 adminRoutes.post("/duty-config", zValidator("json", dutyConfigUpsertSchema), async (c) => {
   const input = c.req.valid("json");
+  await assertUnitManage(c, input.unitId);
   const before = await db.dutyConfig.findUnique({
     where: { unitId_layer: { unitId: input.unitId, layer: input.layer } }
   });
@@ -9877,16 +10112,40 @@ adminRoutes.post("/duty-config", zValidator("json", dutyConfigUpsertSchema), asy
   });
   return c.json(after);
 });
+adminRoutes.delete("/duty-config/:id", async (c) => {
+  const id = c.req.param("id");
+  const cfg = await db.dutyConfig.findUnique({ where: { id } });
+  if (!cfg) throw new HTTPException(404, { message: "Roster type not found" });
+  await assertUnitManage(c, cfg.unitId);
+  const rosterCount = await db.roster.count({ where: { unitId: cfg.unitId, layer: cfg.layer } });
+  if (rosterCount > 0) {
+    throw new HTTPException(409, {
+      message: `This roster type has ${rosterCount} generated roster(s) \u2014 it can't be removed`
+    });
+  }
+  await db.dutyConfig.delete({ where: { id } });
+  await writeAudit({
+    userId: c.get("user").id,
+    action: "DELETE",
+    entity: "DutyConfig",
+    entityId: id,
+    before: cfg
+  });
+  return c.json({ ok: true });
+});
 
 // server/routes/staff.ts
 var staffRoutes = new Hono2();
 staffRoutes.get("/", requireAuth, async (c) => {
   const user = c.get("user");
-  const queryUnitId = c.req.query("unitId");
-  const unitId = user.role === "ADMIN" ? queryUnitId : user.unitId ?? "__none__";
+  const unitId = c.req.query("unitId");
+  const unitScope = visibleUnitsWhere(user);
   return c.json(
     await db.staffMember.findMany({
-      where: unitId ? { unitId } : void 0,
+      where: {
+        ...unitId ? { unitId } : {},
+        ...unitScope ? { unit: unitScope } : {}
+      },
       include: { unavailability: { orderBy: { from: "asc" } } },
       orderBy: [{ kind: "asc" }, { createdAt: "asc" }]
     })
@@ -9900,11 +10159,12 @@ var day3 = (d) => /* @__PURE__ */ new Date(`${d}T00:00:00.000Z`);
 unavailabilityRoutes.get("/", async (c) => {
   const staffId = c.req.query("staffId");
   const unitId = c.req.query("unitId");
+  const unitScope = visibleUnitsWhere(c.get("user"));
   return c.json(
     await db.unavailabilityDate.findMany({
       where: {
         ...staffId ? { staffId } : {},
-        ...unitId ? { staff: { unitId } } : {}
+        staff: { ...unitId ? { unitId } : {}, ...unitScope ? { unit: unitScope } : {} }
       },
       include: { staff: { select: { id: true, fullName: true, shortCode: true, unitId: true } } },
       orderBy: { from: "asc" }
@@ -9915,7 +10175,7 @@ unavailabilityRoutes.post("/", zValidator("json", unavailabilityCreateSchema), a
   const input = c.req.valid("json");
   const staff = await db.staffMember.findUnique({ where: { id: input.staffId } });
   if (!staff) throw new HTTPException(404, { message: "Staff member not found" });
-  assertScope(c, staff.unitId);
+  await assertUnitView(c, staff.unitId);
   const row = await db.unavailabilityDate.create({
     data: {
       staffId: input.staffId,
@@ -9937,7 +10197,7 @@ unavailabilityRoutes.delete("/:id", async (c) => {
   const id = c.req.param("id");
   const row = await db.unavailabilityDate.findUnique({ where: { id }, include: { staff: true } });
   if (!row) throw new HTTPException(404, { message: "Not found" });
-  assertScope(c, row.staff.unitId);
+  await assertUnitView(c, row.staff.unitId);
   await db.unavailabilityDate.delete({ where: { id } });
   await writeAudit({
     userId: c.get("user").id,
@@ -10343,7 +10603,7 @@ function validateRoster(roster, ctx) {
     const prev = prevOf(s.date);
     if (!prev || prev.staffId !== s.staffId) continue;
     const consultantBlock = roster.layer === "CONSULTANT" && s.isWeekendBlock && prev.isWeekendBlock;
-    const nonCashWeekendPair = roster.layer === "SHO" && dayOfWeek(s.date) === 0 && !s.isCash && !prev.isCash;
+    const nonCashWeekendPair = roster.layer !== "CONSULTANT" && dayOfWeek(s.date) === 0 && !s.isCash && !prev.isCash;
     if (!consultantBlock && !nonCashWeekendPair) {
       violations.push({
         rule: "V2",
@@ -10599,13 +10859,6 @@ async function getPriorSlots(unitId, layer, month) {
 // server/routes/rosters.ts
 var rosterRoutes = new Hono2();
 rosterRoutes.use("*", requireAuth);
-function assertLayerEditor(user, layer) {
-  if (user.role === "ADMIN") return;
-  const required = layer === "CONSULTANT" ? "CONSULTANT_EDITOR" : "SHO_EDITOR";
-  if (user.role !== required) {
-    throw new HTTPException(403, { message: `Requires ${required} role` });
-  }
-}
 var slotInclude = {
   slots: {
     include: {
@@ -10636,6 +10889,7 @@ rosterRoutes.get("/", async (c) => {
   const query = external_exports.object({ unitId: external_exports.string(), layer: rosterLayerSchema, month: rosterMonthSchema }).safeParse(c.req.query());
   if (!query.success) throw new HTTPException(400, { message: "unitId, layer, month required" });
   const { unitId, layer, month } = query.data;
+  await assertUnitView(c, unitId);
   const roster = await db.roster.findUnique({
     where: { unitId_layer_month: { unitId, layer, month } },
     include: slotInclude
@@ -10644,9 +10898,14 @@ rosterRoutes.get("/", async (c) => {
   const { violations } = await rosterWithReport(roster.id);
   return c.json({ roster, violations });
 });
-rosterRoutes.get("/:id", async (c) => c.json(await rosterWithReport(c.req.param("id"))));
+rosterRoutes.get("/:id", async (c) => {
+  const report = await rosterWithReport(c.req.param("id"));
+  await assertUnitView(c, report.roster.unitId);
+  return c.json(report);
+});
 rosterRoutes.get("/:id/validation", async (c) => {
-  const { violations } = await rosterWithReport(c.req.param("id"));
+  const { roster, violations } = await rosterWithReport(c.req.param("id"));
+  await assertUnitView(c, roster.unitId);
   return c.json(violations);
 });
 var generateSchema = external_exports.object({
@@ -10657,8 +10916,7 @@ var generateSchema = external_exports.object({
 rosterRoutes.post("/generate", zValidator("json", generateSchema), async (c) => {
   const { unitId, layer, month } = c.req.valid("json");
   const user = c.get("user");
-  assertLayerEditor(user, layer);
-  assertScope(c, unitId);
+  await assertRosterEdit(c, unitId, layer);
   const existing = await db.roster.findUnique({
     where: { unitId_layer_month: { unitId, layer, month } }
   });
@@ -10695,7 +10953,7 @@ rosterRoutes.post("/generate", zValidator("json", generateSchema), async (c) => 
     });
     assignments = result.assignments;
   } else {
-    const puDays = await getPuDays(unitId, month);
+    const puDays = layer === "SHO" ? await getPuDays(unitId, month) : [];
     if (!puDays) {
       throw new HTTPException(409, {
         message: "The consultant roster for this month must be published first"
@@ -10766,9 +11024,7 @@ var assignSchema = external_exports.object({
 async function loadEditableRoster(c) {
   const roster = await db.roster.findUnique({ where: { id: c.req.param("id") } });
   if (!roster) throw new HTTPException(404, { message: "Roster not found" });
-  const user = c.get("user");
-  assertLayerEditor(user, roster.layer);
-  assertScope(c, roster.unitId);
+  await assertRosterEdit(c, roster.unitId, roster.layer);
   return roster;
 }
 rosterRoutes.patch("/:id/slots/:slotId", zValidator("json", assignSchema), async (c) => {
@@ -10918,7 +11174,7 @@ rosterRoutes.post("/:id/publish", async (c) => {
   if (roster.layer === "CONSULTANT") {
     await revalidateShoAgainstConsultant(updated.unitId, updated.month, updated.version);
   }
-  if (roster.layer === "SHO") {
+  if (roster.layer !== "CONSULTANT") {
     await updateRotationState(updated.unitId, updated.id);
   }
   await writeAudit({
@@ -10968,9 +11224,15 @@ async function updateRotationState(unitId, rosterId) {
     if (sun && sun.staffId === slot.staffId && !sun.isCash) last = slot.staffId;
   }
   if (last) {
-    await db.weekendRotationState.updateMany({
-      where: { unitId, layer: "SHO" },
-      data: { lastAssignedId: last }
+    await db.weekendRotationState.upsert({
+      where: { unitId_layer: { unitId, layer: roster.layer } },
+      update: { lastAssignedId: last },
+      create: {
+        unitId,
+        layer: roster.layer,
+        rotationOrder: [...new Set(roster.slots.map((s) => s.staffId))],
+        lastAssignedId: last
+      }
     });
   }
 }
@@ -10985,6 +11247,7 @@ fairnessRoutes.get("/", async (c) => {
   }).safeParse(c.req.query());
   if (!query.success) throw new HTTPException(400, { message: "unitId and layer required" });
   const { unitId, layer, from, to } = query.data;
+  await assertUnitView(c, unitId);
   const rosters = await db.roster.findMany({
     where: {
       unitId,
@@ -11053,7 +11316,7 @@ holidayRoutes.get("/", async (c) => {
 });
 holidayRoutes.post(
   "/",
-  requireRole("ADMIN"),
+  requireRole("SUPER_ADMIN", "HOSPITAL_ADMIN", "DEPARTMENT_ADMIN"),
   zValidator("json", publicHolidayCreateSchema),
   async (c) => {
     const input = c.req.valid("json");
@@ -11072,7 +11335,7 @@ holidayRoutes.post(
     return c.json(holiday, 201);
   }
 );
-holidayRoutes.delete("/:id", requireRole("ADMIN"), async (c) => {
+holidayRoutes.delete("/:id", requireRole("SUPER_ADMIN", "HOSPITAL_ADMIN", "DEPARTMENT_ADMIN"), async (c) => {
   const id = c.req.param("id");
   const holiday = await db.publicHoliday.findUnique({ where: { id } });
   if (!holiday) throw new HTTPException(404, { message: "Holiday not found" });

@@ -20,6 +20,7 @@ model Hospital {
   name        String
   city        String?
   departments Department[]
+  admins      User[] // HOSPITAL_ADMIN accounts scoped here
   createdAt   DateTime     @default(now())
 }
 
@@ -29,6 +30,7 @@ model Department {
   hospital   Hospital @relation(fields: [hospitalId], references: [id])
   name       String // "Paediatrics"
   units      Unit[]
+  admins     User[] // DEPARTMENT_ADMIN accounts scoped here
   createdAt  DateTime @default(now())
 
   @@unique([hospitalId, name])
@@ -81,6 +83,7 @@ model StaffMember {
   slots          DutySlot[]
   secondOnCalls  DutySlot[]           @relation("SecondOnCall")
   unavailability UnavailabilityDate[]
+  userAccounts   User[] // login accounts linked to this person (e.g. a roster admin)
   createdAt      DateTime             @default(now())
 
   @@index([unitId, kind])
@@ -92,32 +95,51 @@ model StaffMember {
 
 // ───────────────────────── Auth ─────────────────────────
 
+// Four-level hierarchy. Each role manages everything BELOW its scope:
+//   SUPER_ADMIN      — global; creates hospitals, assigns hospital admins.
+//   HOSPITAL_ADMIN   — scoped to hospitalId; creates departments + dept admins.
+//   DEPARTMENT_ADMIN — scoped to departmentId; creates wards (units), staff,
+//                      roster types (DutyConfig) and roster admins. (E1 — Wasana)
+//   ROSTER_ADMIN     — scoped to unitId + rosterLayers; generates, edits and
+//                      publishes those rosters only. (E2 — Ruwanda, SHO layer)
 enum Role {
-  ADMIN
-  CONSULTANT_EDITOR // E1 — Wasana
-  SHO_EDITOR // E2 — Ruwanda
-  // future: HO_EDITOR, MO_EDITOR, NURSE_EDITOR, VIEWER
+  SUPER_ADMIN
+  HOSPITAL_ADMIN
+  DEPARTMENT_ADMIN
+  ROSTER_ADMIN
 }
 
 model User {
-  id           String     @id @default(cuid())
-  email        String     @unique
+  id           String  @id @default(cuid())
+  email        String  @unique
   passwordHash String
   displayName  String
   role         Role
-  unitId       String? // editors are scoped to a unit; admin has null
-  unit         Unit?      @relation(fields: [unitId], references: [id])
+  hospitalId   String? // HOSPITAL_ADMIN scope
+  hospital     Hospital? @relation(fields: [hospitalId], references: [id])
+  departmentId String? // DEPARTMENT_ADMIN scope
+  department   Department? @relation(fields: [departmentId], references: [id])
+  unitId       String? // ROSTER_ADMIN scope
+  unit         Unit?   @relation(fields: [unitId], references: [id])
+  rosterLayers RosterLayer[] @default([]) // ROSTER_ADMIN: which rosters they run
+  staffId      String? // optional link: which staff member this account belongs to
+  staff        StaffMember? @relation(fields: [staffId], references: [id])
   auditLogs    AuditLog[]
-  createdAt    DateTime   @default(now())
+  createdAt    DateTime @default(now())
 }
 
 // ───────────────────────── Duty configuration ─────────────────────────
 // Per-unit, per-layer shift definitions so other departments can differ.
 
+// A "roster type" = one DutyConfig row (unit + layer + pool kinds). CONSULTANT
+// uses the consultant generator; every other layer uses the pool (on-call)
+// generator. Cash/post-cash linkage to the consultant roster is SHO-only.
 enum RosterLayer {
   CONSULTANT
   SHO // covers the combined SHO+RHO pool
-  // future: HO, MO, NURSE
+  HO
+  MO
+  NURSE
 }
 
 model DutyConfig {
